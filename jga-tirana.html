@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JGA Tirana</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     #login-overlay {
       position: fixed;
@@ -60,6 +61,7 @@
       color: #2c2c2c;
       margin-bottom: 12px;
     }
+    .login-box input.name-input { letter-spacing: 0.5px; }
     .login-box input:focus { outline: none; border-color: #b8976a; }
     .login-box button {
       width: 100%;
@@ -155,6 +157,71 @@
       font-weight: 400;
     }
 
+    /* NAME BADGE */
+    .user-badge {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .user-badge-btn {
+      background: rgba(255,255,255,0.85);
+      border: 1px solid var(--gold-pale);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      font-family: 'Jost', sans-serif;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    .user-badge-btn:hover { background: var(--gold-pale); color: var(--gold); border-color: var(--gold); }
+    .user-badge-popup {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: white;
+      border: 1px solid var(--gold-pale);
+      border-radius: 6px;
+      padding: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      min-width: 200px;
+      z-index: 200;
+    }
+    .user-badge-popup.visible { display: block; }
+    .user-badge-popup input {
+      width: 100%;
+      border: 1px solid var(--gold-pale);
+      border-radius: 3px;
+      padding: 7px 10px;
+      font-size: 0.85rem;
+      font-family: 'Jost', sans-serif;
+      margin-bottom: 8px;
+      background: var(--off-white);
+      color: var(--text);
+    }
+    .user-badge-popup input:focus { outline: none; border-color: var(--gold); }
+    .user-badge-popup button {
+      width: 100%;
+      background: var(--gold);
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 7px;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: 'Jost', sans-serif;
+    }
+    .user-badge-popup button:hover { background: var(--gold-light); }
+
     nav {
       display: flex;
       justify-content: center;
@@ -166,6 +233,7 @@
       top: 0;
       z-index: 100;
       box-shadow: 0 2px 16px rgba(184,151,106,0.08);
+      flex-wrap: wrap;
     }
     nav a {
       text-decoration: none;
@@ -174,7 +242,7 @@
       font-size: 0.72rem;
       letter-spacing: 2.5px;
       text-transform: uppercase;
-      padding: 16px 28px;
+      padding: 16px 24px;
       border-bottom: 2px solid transparent;
       transition: all 0.2s;
     }
@@ -799,9 +867,12 @@
     }
 
     .card-notes { margin-top: 6px; }
-    .card-note { background: var(--off-white); border-radius: 3px; padding: 6px 8px; margin-bottom: 4px; }
+    .card-note { background: var(--off-white); border-radius: 3px; padding: 6px 8px; margin-bottom: 4px; display: flex; align-items: flex-start; gap: 6px; }
+    .card-note-body { flex: 1; }
     .card-note-meta { font-size: 0.62rem; color: var(--text-muted); margin-bottom: 2px; }
     .card-note-text { font-size: 0.78rem; font-weight: 300; }
+    .card-note-del { background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.85rem; padding: 0; line-height: 1; flex-shrink: 0; margin-top: 2px; transition: color 0.2s; }
+    .card-note-del:hover { color: var(--rose); }
     .card-note-form {
       display: none;
       background: var(--off-white);
@@ -882,6 +953,182 @@
     }
     .einkauf-progress strong { color: var(--sage); }
 
+    /* ===== BARS & CLUBS / RESTAURANTS ===== */
+    .location-form {
+      background: var(--off-white);
+      border: 1px solid var(--gold-pale);
+      border-radius: 4px;
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    .location-form label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      font-weight: 500;
+      display: block;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+    .location-form label:first-of-type { margin-top: 0; }
+    .location-form input, .location-form textarea {
+      width: 100%;
+      border: 1px solid var(--gold-pale);
+      border-radius: 3px;
+      padding: 9px 12px;
+      font-size: 0.87rem;
+      font-family: inherit;
+      background: var(--white);
+      font-weight: 300;
+      color: var(--text);
+    }
+    .location-form input:focus, .location-form textarea:focus { outline: none; border-color: var(--gold); }
+    .location-form textarea { height: 70px; resize: vertical; }
+    .location-url-hint {
+      font-size: 0.75rem;
+      color: var(--sage);
+      margin-top: 4px;
+      letter-spacing: 0.3px;
+      min-height: 16px;
+    }
+
+    .location-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .location-card {
+      background: var(--white);
+      border-radius: 4px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border-top: 2px solid var(--gold);
+      position: relative;
+      cursor: pointer;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .location-card:hover { box-shadow: 0 4px 20px rgba(184,151,106,0.18); transform: translateY(-2px); }
+    .location-card-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      pointer-events: none;
+    }
+    .location-card-address {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-style: italic;
+      cursor: text;
+      pointer-events: all;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      padding: 2px 4px;
+      transition: border-color 0.2s;
+      min-height: 22px;
+    }
+    .location-card-address:hover { border-color: var(--gold-pale); }
+    .location-card-address:focus { outline: none; border-color: var(--gold); background: var(--off-white); }
+    .location-card-desc {
+      font-size: 0.83rem;
+      color: #555;
+      font-weight: 300;
+      line-height: 1.6;
+      cursor: text;
+      pointer-events: all;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      padding: 2px 4px;
+      transition: border-color 0.2s;
+      min-height: 22px;
+    }
+    .location-card-desc:hover { border-color: var(--gold-pale); }
+    .location-card-desc:focus { outline: none; border-color: var(--gold); background: var(--off-white); }
+    .location-card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      align-items: center;
+      pointer-events: all;
+    }
+    .location-link-btn {
+      background: var(--gold-pale);
+      color: var(--gold);
+      border: none;
+      border-radius: 3px;
+      padding: 5px 12px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .location-link-btn:hover { background: var(--gold); color: white; }
+    .location-del-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0 4px;
+      line-height: 1;
+      transition: color 0.2s;
+      margin-left: auto;
+    }
+    .location-del-btn:hover { color: var(--rose); }
+    .location-maps-badge {
+      font-size: 0.7rem;
+      background: var(--sage-pale);
+      color: var(--sage);
+      border-radius: 3px;
+      padding: 2px 7px;
+      letter-spacing: 0.3px;
+    }
+
+    /* Tooltip on card hover */
+    .location-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text);
+      color: white;
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 0.78rem;
+      min-width: 180px;
+      max-width: 260px;
+      z-index: 50;
+      pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      line-height: 1.5;
+    }
+    .location-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--text);
+    }
+    .location-card:hover .location-tooltip { display: block; }
+
+    .map-container {
+      height: 380px;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 28px;
+      border: 1px solid var(--gold-pale);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
     footer {
       text-align: center;
       padding: 36px;
@@ -899,7 +1146,8 @@
     <h2>JGA Tirana</h2>
     <div class="login-line"></div>
     <p>Bitte Passwort eingeben</p>
-    <input type="password" id="pw-input" placeholder="••••••" onkeydown="if(event.key==='Enter') checkPw()">
+    <input type="password" id="pw-input" placeholder="••••••" onkeydown="if(event.key==='Enter') document.getElementById('name-input').focus()">
+    <input type="text" id="name-input" class="name-input" placeholder="Dein Name (optional)" onkeydown="if(event.key==='Enter') checkPw()">
     <button onclick="checkPw()">Zugang</button>
     <div class="login-error" id="pw-error"></div>
   </div>
@@ -910,6 +1158,14 @@
   <h1>Tirana</h1>
   <div class="header-line"></div>
   <p>16. – 19. Juli 2026 &nbsp;·&nbsp; 8 Mädels &nbsp;·&nbsp; Für Krissi</p>
+
+  <div class="user-badge">
+    <button class="user-badge-btn" id="user-badge-btn" onclick="toggleUserPopup()">👤 <span id="user-badge-name">Gast</span></button>
+    <div class="user-badge-popup" id="user-badge-popup">
+      <input type="text" id="user-name-edit" placeholder="Dein Name">
+      <button onclick="saveUsername()">Speichern</button>
+    </div>
+  </div>
 </header>
 
 <nav>
@@ -917,6 +1173,8 @@
   <a href="#todos">To-dos</a>
   <a href="#spiele">Spiele</a>
   <a href="#einkauf">Einkauf</a>
+  <a href="#bars">Bars &amp; Clubs</a>
+  <a href="#restaurants">Restaurants</a>
 </nav>
 
 <div class="container">
@@ -1094,6 +1352,52 @@
     <div id="einkauf-liste"></div>
   </section>
 
+  <!-- ===== BARS & CLUBS ===== -->
+  <section id="bars">
+    <h2>Bars &amp; Clubs</h2>
+    <div class="section-rule"></div>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; font-weight: 300;">Locations sammeln — Adresse, Link und Notizen eintragen.</p>
+
+    <div class="location-form">
+      <label>Name der Location *</label>
+      <input type="text" id="bars-name" placeholder="z.B. Blloku Social Club">
+      <label>Website oder Google Maps Link</label>
+      <input type="text" id="bars-url" placeholder="https://..." oninput="checkLocationUrl('bars')">
+      <div class="location-url-hint" id="bars-url-hint"></div>
+      <label>Adresse (optional)</label>
+      <input type="text" id="bars-address" placeholder="z.B. Rruga Ismail Qemali, Tirana">
+      <label>Notiz / Beschreibung (optional)</label>
+      <textarea id="bars-desc" placeholder="z.B. Super Rooftop-Bar, tolle Aussicht..."></textarea>
+      <button class="btn-primary" onclick="addLocation('bars')" style="margin-top: 12px;">+ Hinzufügen</button>
+    </div>
+
+    <div class="location-grid" id="bars-grid"></div>
+    <div class="map-container" id="bars-map"></div>
+  </section>
+
+  <!-- ===== RESTAURANTS ===== -->
+  <section id="restaurants">
+    <h2>Restaurants</h2>
+    <div class="section-rule"></div>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; font-weight: 300;">Restaurants sammeln — Adresse, Link und Notizen eintragen.</p>
+
+    <div class="location-form">
+      <label>Name des Restaurants *</label>
+      <input type="text" id="restaurants-name" placeholder="z.B. Mullixhiu">
+      <label>Website oder Google Maps Link</label>
+      <input type="text" id="restaurants-url" placeholder="https://..." oninput="checkLocationUrl('restaurants')">
+      <div class="location-url-hint" id="restaurants-url-hint"></div>
+      <label>Adresse (optional)</label>
+      <input type="text" id="restaurants-address" placeholder="z.B. Bulevardi Dëshmorët e Kombit, Tirana">
+      <label>Notiz / Beschreibung (optional)</label>
+      <textarea id="restaurants-desc" placeholder="z.B. Traditionell albanisch, vegetarische Optionen..."></textarea>
+      <button class="btn-primary" onclick="addLocation('restaurants')" style="margin-top: 12px;">+ Hinzufügen</button>
+    </div>
+
+    <div class="location-grid" id="restaurants-grid"></div>
+    <div class="map-container" id="restaurants-map"></div>
+  </section>
+
 </div>
 
 <footer>JGA Tirana 2026 &nbsp;·&nbsp; Orga-Meeting 09.06.2026</footer>
@@ -1101,12 +1405,55 @@
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
+  // ===== USERNAME =====
+  function getUsername() {
+    return localStorage.getItem('jga-username') || '';
+  }
+  function setUsername(name) {
+    localStorage.setItem('jga-username', name);
+    const badgeName = document.getElementById('user-badge-name');
+    if (badgeName) badgeName.textContent = name || 'Gast';
+  }
+  function toggleUserPopup() {
+    const popup = document.getElementById('user-badge-popup');
+    popup.classList.toggle('visible');
+    if (popup.classList.contains('visible')) {
+      const inp = document.getElementById('user-name-edit');
+      inp.value = getUsername();
+      inp.focus();
+    }
+  }
+  function saveUsername() {
+    const name = document.getElementById('user-name-edit').value.trim();
+    setUsername(name);
+    document.getElementById('user-badge-popup').classList.remove('visible');
+  }
+  document.addEventListener('click', function(e) {
+    const badge = document.getElementById('user-badge-btn');
+    const popup = document.getElementById('user-badge-popup');
+    if (popup && popup.classList.contains('visible')) {
+      if (!badge.contains(e.target) && !popup.contains(e.target)) {
+        popup.classList.remove('visible');
+      }
+    }
+  });
+  // Init badge on load
+  (function() {
+    const saved = getUsername();
+    const badgeName = document.getElementById('user-badge-name');
+    if (badgeName) badgeName.textContent = saved || 'Gast';
+  })();
+
   // ===== LOGIN =====
   function checkPw() {
     const val = document.getElementById('pw-input').value.trim().toLowerCase();
     if (val === 'krissi') {
+      // Save name if provided
+      const nameVal = document.getElementById('name-input').value.trim();
+      if (nameVal) setUsername(nameVal);
       sessionStorage.setItem('jga-auth', '1');
       document.getElementById('login-overlay').classList.add('hidden');
     } else {
@@ -1117,6 +1464,13 @@
 
   if (sessionStorage.getItem('jga-auth') === '1') {
     document.getElementById('login-overlay').classList.add('hidden');
+  } else {
+    // Pre-fill name if already known
+    const savedName = getUsername();
+    if (savedName) {
+      const ni = document.getElementById('name-input');
+      if (ni) ni.value = savedName;
+    }
   }
 
   // ===== FIREBASE =====
@@ -1132,7 +1486,6 @@
   const db = firebase.firestore();
 
   // ===== TODO SEED-DATEN =====
-  // Nur für initiales Befüllen von Firestore — HTML-Änderungen überschreiben keine Firestore-Daten
   const TODO_SEED = [
     { nr: 1,  text: 'Reisezeitraum: <strong>Donnerstag, 16. Juli – Sonntag, 19. Juli</strong>', person: '', dueDate: '2026-06-10', done: true },
     { nr: 2,  text: 'Budget festlegen und aufteilen — Verwaltung via <strong>Splitwise</strong> oder <strong>Tricount</strong>, Abrechnung nach dem Urlaub; zahlen & tracken: Maria, Dajenne oder Melissa', person: '', dueDate: '2026-06-20', done: false },
@@ -1230,6 +1583,8 @@
       ? '📅 ' + formatDate(todo.dueDate)
       : '<span class="card-date-empty">Fälligkeitsdatum setzen</span>';
 
+    const savedName = getUsername();
+
     card.innerHTML = `
       <div class="card-date" onclick="toggleDateInput('${todo.id}')" title="Datum ändern">${dateLabel}</div>
       <input class="card-date-input" type="date" id="date-input-${todo.id}" value="${todo.dueDate || ''}"
@@ -1251,7 +1606,7 @@
       </div>
       <div class="card-notes" id="card-notes-${todo.id}"></div>
       <div class="card-note-form" id="card-form-${todo.id}">
-        <input type="text" placeholder="Dein Name" id="card-name-${todo.id}">
+        <input type="text" placeholder="Dein Name" id="card-name-${todo.id}" value="${savedName}">
         <textarea placeholder="Notiz..." id="card-notetext-${todo.id}"></textarea>
         <div class="card-note-form-btns">
           <button class="btn-save" onclick="saveCardNote('${todo.id}')">Speichern</button>
@@ -1321,7 +1676,6 @@
 
   function setStatus(id, newStatus) {
     db.collection('todos_data').doc(id).update({ status: newStatus }).catch(() => {
-      // Fallback für Seed-Todos ohne Firestore-Dokument
       const t = allTodos.find(x => x.id === id);
       if (t) { t.status = newStatus; renderKanban(); }
     });
@@ -1385,7 +1739,13 @@
   }
 
   function toggleCardNoteForm(id) {
-    document.getElementById('card-form-' + id).classList.toggle('visible');
+    const form = document.getElementById('card-form-' + id);
+    form.classList.toggle('visible');
+    // Pre-fill username when opening
+    if (form.classList.contains('visible')) {
+      const nameInp = document.getElementById('card-name-' + id);
+      if (nameInp && !nameInp.value) nameInp.value = getUsername();
+    }
   }
 
   function saveCardNote(id) {
@@ -1402,12 +1762,25 @@
     document.getElementById('card-form-' + id).classList.remove('visible');
   }
 
-  function renderCardNote(id, note) {
+  function deleteCardNote(docId, index) {
+    db.collection('notes').doc(docId).get().then(doc => {
+      if (!doc.exists) return;
+      const items = (doc.data().items || []).filter((_, i) => i !== index);
+      db.collection('notes').doc(docId).set({ items });
+    });
+  }
+
+  function renderCardNote(id, note, index) {
     const container = document.getElementById('card-notes-' + id);
     if (!container) return;
     const div = document.createElement('div');
     div.className = 'card-note';
-    div.innerHTML = '<div class="card-note-meta">' + note.meta + '</div><div class="card-note-text">' + note.text + '</div>';
+    div.innerHTML = `
+      <div class="card-note-body">
+        <div class="card-note-meta">${note.meta}</div>
+        <div class="card-note-text">${note.text}</div>
+      </div>
+      <button class="card-note-del" onclick="deleteCardNote('${id}', ${index})" title="Notiz löschen">×</button>`;
     container.appendChild(div);
   }
 
@@ -1528,6 +1901,160 @@
     if (!hasAny) liste.innerHTML = '<p class="einkauf-empty">Noch keine Artikel eingetragen.</p>';
   }
 
+  // ===== BARS & CLUBS / RESTAURANTS =====
+
+  // Leaflet maps — initialized lazily when section comes into view
+  let mapsInitialized = { bars: false, restaurants: false };
+  let leafletMaps = {};
+  let locationMarkers = { bars: {}, restaurants: {} };
+
+  function initMap(type) {
+    if (mapsInitialized[type]) return;
+    mapsInitialized[type] = true;
+    const map = L.map(type + '-map').setView([41.3275, 19.8187], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+    leafletMaps[type] = map;
+  }
+
+  // Parse coordinates from address (lat,lng) or Google Maps URL
+  function parseCoords(url, address) {
+    // Try Google Maps URL pattern @lat,lng
+    const gmMatch = (url || '').match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (gmMatch) return { lat: parseFloat(gmMatch[1]), lng: parseFloat(gmMatch[2]) };
+    // Try address as plain "lat,lng"
+    const coordMatch = (address || '').match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+    if (coordMatch) return { lat: parseFloat(coordMatch[1]), lng: parseFloat(coordMatch[2]) };
+    return null;
+  }
+
+  function isGoogleMapsUrl(url) {
+    return /maps\.google|goo\.gl\/maps|maps\.app\.goo\.gl/.test(url || '');
+  }
+
+  function checkLocationUrl(type) {
+    const url = document.getElementById(type + '-url').value.trim();
+    const hint = document.getElementById(type + '-url-hint');
+    if (isGoogleMapsUrl(url)) {
+      hint.textContent = 'Google Maps Link gespeichert — Adresse bitte manuell eintragen.';
+      hint.style.color = 'var(--sage)';
+    } else if (url) {
+      hint.textContent = '';
+    } else {
+      hint.textContent = '';
+    }
+  }
+
+  function addLocation(type) {
+    const name = document.getElementById(type + '-name').value.trim();
+    if (!name) { alert('Bitte einen Namen eingeben.'); return; }
+    const url = document.getElementById(type + '-url').value.trim();
+    const address = document.getElementById(type + '-address').value.trim();
+    const description = document.getElementById(type + '-desc').value.trim();
+
+    const coords = parseCoords(url, address);
+    const lat = coords ? coords.lat : null;
+    const lng = coords ? coords.lng : null;
+
+    db.collection(type).add({ name, url, address, description, lat, lng, createdAt: Date.now() }).then(() => {
+      document.getElementById(type + '-name').value = '';
+      document.getElementById(type + '-url').value = '';
+      document.getElementById(type + '-address').value = '';
+      document.getElementById(type + '-desc').value = '';
+      document.getElementById(type + '-url-hint').textContent = '';
+    });
+  }
+
+  function deleteLocation(type, id) {
+    if (!confirm('Location wirklich löschen?')) return;
+    db.collection(type).doc(id).delete();
+  }
+
+  function updateLocationField(type, id, field, value) {
+    db.collection(type).doc(id).update({ [field]: value });
+  }
+
+  function renderLocations(type, items) {
+    initMap(type);
+    const grid = document.getElementById(type + '-grid');
+    grid.innerHTML = '';
+
+    // Clear existing markers
+    Object.values(locationMarkers[type]).forEach(m => m.remove());
+    locationMarkers[type] = {};
+
+    items.forEach(item => {
+      const isMaps = isGoogleMapsUrl(item.url);
+      const coords = item.lat && item.lng ? { lat: item.lat, lng: item.lng } : null;
+
+      // Create card
+      const card = document.createElement('div');
+      card.className = 'location-card';
+
+      const urlBtn = item.url
+        ? `<a class="location-link-btn" href="${item.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 Link öffnen</a>`
+        : '';
+      const mapsBadge = isMaps ? `<span class="location-maps-badge">📍 Maps</span>` : '';
+
+      card.innerHTML = `
+        <div class="location-tooltip">
+          <strong>${item.name}</strong>
+          ${item.address ? '<br><span style="opacity:0.8">' + item.address + '</span>' : ''}
+          ${item.description ? '<br><span style="opacity:0.7; font-size:0.72rem">' + item.description + '</span>' : ''}
+        </div>
+        <div class="location-card-name">${item.name}</div>
+        <div class="location-card-address" contenteditable="true"
+          data-placeholder="Adresse hinzufügen"
+          onblur="updateLocationField('${type}','${item.id}','address',this.textContent.trim())"
+          onclick="event.stopPropagation()"
+        >${item.address || ''}</div>
+        <div class="location-card-desc" contenteditable="true"
+          onblur="updateLocationField('${type}','${item.id}','description',this.textContent.trim())"
+          onclick="event.stopPropagation()"
+        >${item.description || ''}</div>
+        <div class="location-card-actions">
+          ${urlBtn}
+          ${mapsBadge}
+          <button class="location-del-btn" onclick="event.stopPropagation(); deleteLocation('${type}','${item.id}')" title="Löschen">×</button>
+        </div>`;
+
+      // Placeholder styling for empty contenteditable
+      const addrEl = card.querySelector('.location-card-address');
+      const descEl = card.querySelector('.location-card-desc');
+      if (!item.address) addrEl.style.color = '#bbb';
+      if (!item.description) descEl.style.color = '#bbb';
+      addrEl.addEventListener('focus', () => { if (!addrEl.textContent.trim()) addrEl.style.color = ''; });
+      addrEl.addEventListener('blur', () => { if (!addrEl.textContent.trim()) addrEl.style.color = '#bbb'; });
+      descEl.addEventListener('focus', () => { if (!descEl.textContent.trim()) descEl.style.color = ''; });
+      descEl.addEventListener('blur', () => { if (!descEl.textContent.trim()) descEl.style.color = '#bbb'; });
+
+      // Click card opens URL
+      card.addEventListener('click', () => {
+        if (item.url) window.open(item.url, '_blank', 'noopener');
+      });
+
+      grid.appendChild(card);
+
+      // Add marker to map if coords available
+      if (coords && leafletMaps[type]) {
+        const marker = L.marker([coords.lat, coords.lng])
+          .addTo(leafletMaps[type])
+          .bindPopup(`<strong>${item.name}</strong>${item.description ? '<br>' + item.description : ''}`);
+        locationMarkers[type][item.id] = marker;
+      }
+    });
+
+    // Fit map to markers if any exist
+    const markerList = Object.values(locationMarkers[type]);
+    if (markerList.length > 0 && leafletMaps[type]) {
+      try {
+        const group = L.featureGroup(markerList);
+        leafletMaps[type].fitBounds(group.getBounds().pad(0.3));
+      } catch(e) {}
+    }
+  }
+
   // ===== FIRESTORE LISTENERS =====
 
   // Todos: vollständige Daten aus todos_data
@@ -1539,7 +2066,6 @@
       } else if (!d.persons) {
         d.persons = [];
       }
-      // phase → dueDate Migration für alte Dokumente
       if (!d.dueDate && d.phase) d.dueDate = '';
       return { id: doc.id, ...d };
     });
@@ -1550,7 +2076,7 @@
         const container = document.getElementById('card-notes-' + doc.id);
         if (!container) return;
         container.innerHTML = '';
-        (doc.data().items || []).forEach(n => renderCardNote(doc.id, n));
+        (doc.data().items || []).forEach((n, i) => renderCardNote(doc.id, n, i));
       });
     });
   });
@@ -1561,7 +2087,7 @@
       const container = document.getElementById('card-notes-' + change.doc.id);
       if (!container) return;
       container.innerHTML = '';
-      (change.doc.data().items || []).forEach(n => renderCardNote(change.doc.id, n));
+      (change.doc.data().items || []).forEach((n, i) => renderCardNote(change.doc.id, n, i));
     });
   });
 
@@ -1592,6 +2118,24 @@
   db.collection('einkauf').orderBy('createdAt').onSnapshot(snapshot => {
     const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     renderEinkauf(items);
+  });
+
+  // Bars
+  db.collection('bars').orderBy('createdAt').onSnapshot(snapshot => {
+    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderLocations('bars', items);
+  });
+
+  // Restaurants
+  db.collection('restaurants').orderBy('createdAt').onSnapshot(snapshot => {
+    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderLocations('restaurants', items);
+  });
+
+  // Initialize maps on page load (so they render correctly)
+  window.addEventListener('load', () => {
+    initMap('bars');
+    initMap('restaurants');
   });
 
 </script>
