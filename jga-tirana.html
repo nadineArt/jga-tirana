@@ -267,7 +267,7 @@
     }
 
     /* PROGRAMM */
-    .days { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .days { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
     .day-card {
       background: var(--white);
       border-radius: 4px;
@@ -287,29 +287,98 @@
       font-family: 'Cormorant Garamond', serif;
       font-size: 1.25rem;
       font-weight: 600;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       color: var(--text);
     }
-    .day-card ul { list-style: none; }
-    .day-card ul li {
+    .prog-list { list-style: none; }
+    .prog-item {
       font-size: 0.85rem;
-      padding: 6px 0;
+      padding: 5px 0;
       border-bottom: 1px solid var(--gold-pale);
       display: flex;
       align-items: flex-start;
-      gap: 10px;
+      gap: 6px;
       font-weight: 300;
+      cursor: grab;
+      position: relative;
     }
-    .day-card ul li:last-child { border-bottom: none; }
-    .day-card ul li .time {
+    .prog-item:last-child { border-bottom: none; }
+    .prog-item.drag-over-prog { border-top: 2px solid var(--gold); margin-top: -2px; }
+    .prog-item.dragging-prog { opacity: 0.3; cursor: grabbing; }
+    .prog-drag-handle {
+      color: #ddd;
+      font-size: 0.85rem;
+      cursor: grab;
+      padding-top: 2px;
+      flex-shrink: 0;
+      line-height: 1;
+      user-select: none;
+    }
+    .prog-item:hover .prog-drag-handle { color: #bbb; }
+    .prog-time-edit {
       font-size: 0.7rem;
       color: var(--sage);
       font-weight: 500;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
       white-space: nowrap;
-      margin-top: 2px;
       min-width: 52px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      cursor: text;
+      padding: 0;
+      border-bottom: 1px dashed transparent;
+      transition: border-color 0.15s;
     }
+    .prog-time-edit:focus { outline: none; border-bottom-color: var(--sage); }
+    .prog-time-edit:hover { border-bottom-color: var(--gold-pale); }
+    .prog-text-edit {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 300;
+      color: var(--text);
+      cursor: text;
+      padding: 0;
+      border-bottom: 1px dashed transparent;
+      transition: border-color 0.15s;
+      resize: none;
+      line-height: 1.4;
+      overflow: hidden;
+    }
+    .prog-text-edit:focus { outline: none; border-bottom-color: var(--gold); }
+    .prog-text-edit:hover { border-bottom-color: var(--gold-pale); }
+    .prog-del-btn {
+      background: none;
+      border: none;
+      color: transparent;
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .prog-item:hover .prog-del-btn { color: #ddd; }
+    .prog-del-btn:hover { color: var(--rose) !important; }
+    .prog-add-btn {
+      background: none;
+      border: 1px dashed var(--gold-pale);
+      color: var(--gold);
+      border-radius: 3px;
+      padding: 5px 10px;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 10px;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    .prog-add-btn:hover { background: var(--gold-pale); }
 
     .info-card {
       background: var(--white);
@@ -1214,51 +1283,7 @@
   <section id="programm">
     <h2>Reiseplan</h2>
     <div class="section-rule"></div>
-    <div class="days">
-
-      <div class="day-card">
-        <h3>Tag 1</h3>
-        <h4>Do, 16. Juli</h4>
-        <ul>
-          <li><span class="time">Anreise</span> Stullen & Snacks von Dajenne</li>
-          <li><span class="time">Ankunft</span> Flughafen → direkt zur Unterkunft</li>
-          <li><span class="time">Nachm.</span> Einkaufen (Gruppe mit Krissi) & Dekorieren</li>
-          <li><span class="time">Abend</span> Entspannen in der Unterkunft / spontan Bar-Hopping</li>
-        </ul>
-      </div>
-
-      <div class="day-card">
-        <h3>Tag 2</h3>
-        <h4>Fr, 17. Juli</h4>
-        <ul>
-          <li><span class="time">Vormittag</span> Sightseeing & Kultur (Tourguide)</li>
-          <li><span class="time">Mittag</span> Authentisch albanisch essen</li>
-          <li><span class="time">Nachm.</span> Ausruhen in der Unterkunft</li>
-          <li><span class="time">Abend</span> JGA-Spiele & Trinkspiele</li>
-          <li><span class="time">Nacht</span> Vorglühen → Party / Club</li>
-        </ul>
-      </div>
-
-      <div class="day-card">
-        <h3>Tag 3</h3>
-        <h4>Sa, 18. Juli</h4>
-        <ul>
-          <li><span class="time">Tagsüber</span> Strandtag (Recovery Day)</li>
-          <li><span class="time">Mittag</span> Essen im Strandlokal</li>
-          <li><span class="time">Nachm.</span> Beach Bar, Drinks, entspannen</li>
-          <li><span class="time">Abend</span> noch offen</li>
-        </ul>
-      </div>
-
-      <div class="day-card">
-        <h3>Tag 4</h3>
-        <h4>So, 19. Juli</h4>
-        <ul>
-          <li><span class="time">Abreise</span> noch offen</li>
-        </ul>
-      </div>
-
-    </div>
+    <div class="days" id="programm-days"></div>
 
     <div class="info-card gold-accent">
       <span class="label">Outfit-Abend</span>
@@ -1825,6 +1850,186 @@
       <button class="card-note-del" onclick="deleteCardNote('${id}', ${index})" title="Notiz löschen">×</button>`;
     container.appendChild(div);
   }
+
+  // ===== PROGRAMM =====
+  const PROGRAMM_SEED = [
+    { id: 'tag1', label: 'Tag 1', date: 'Do, 16. Juli', items: [
+      { time: 'Anreise',  text: 'Stullen & Snacks von Dajenne' },
+      { time: 'Ankunft',  text: 'Flughafen → direkt zur Unterkunft' },
+      { time: 'Nachm.',   text: 'Einkaufen (Gruppe mit Krissi) & Dekorieren' },
+      { time: 'Abend',    text: 'Entspannen in der Unterkunft / spontan Bar-Hopping' },
+    ]},
+    { id: 'tag2', label: 'Tag 2', date: 'Fr, 17. Juli', items: [
+      { time: 'Vormittag', text: 'Sightseeing & Kultur (Tourguide)' },
+      { time: 'Mittag',    text: 'Authentisch albanisch essen' },
+      { time: 'Nachm.',    text: 'Ausruhen in der Unterkunft' },
+      { time: 'Abend',     text: 'JGA-Spiele & Trinkspiele' },
+      { time: 'Nacht',     text: 'Vorglühen → Party / Club' },
+    ]},
+    { id: 'tag3', label: 'Tag 3', date: 'Sa, 18. Juli', items: [
+      { time: 'Tagsüber', text: 'Strandtag (Recovery Day)' },
+      { time: 'Mittag',   text: 'Essen im Strandlokal' },
+      { time: 'Nachm.',   text: 'Beach Bar, Drinks, entspannen' },
+      { time: 'Abend',    text: 'noch offen' },
+    ]},
+    { id: 'tag4', label: 'Tag 4', date: 'So, 19. Juli', items: [
+      { time: 'Abreise', text: 'noch offen' },
+    ]},
+  ];
+
+  let programmData = {}; // { tagId: { label, date, items: [{time, text}] } }
+
+  function seedProgramm() {
+    const col = db.collection('programm');
+    col.get().then(snap => {
+      if (snap.empty) {
+        const batch = db.batch();
+        PROGRAMM_SEED.forEach(day => {
+          batch.set(col.doc(day.id), { label: day.label, date: day.date, items: day.items, order: parseInt(day.id.replace('tag','')) });
+        });
+        batch.commit();
+      }
+    }).catch(() => {});
+  }
+  seedProgramm();
+
+  // Sofort-Fallback aus Seed rendern
+  PROGRAMM_SEED.forEach(d => { programmData[d.id] = { label: d.label, date: d.date, items: d.items, order: parseInt(d.id.replace('tag','')) }; });
+  renderProgramm();
+
+  function renderProgramm() {
+    const container = document.getElementById('programm-days');
+    container.innerHTML = '';
+    const days = Object.entries(programmData).sort((a,b) => (a[1].order||0) - (b[1].order||0));
+    days.forEach(([dayId, day]) => {
+      const card = document.createElement('div');
+      card.className = 'day-card';
+      card.innerHTML = `<h3>${day.label}</h3><h4>${day.date}</h4>`;
+      const ul = document.createElement('ul');
+      ul.className = 'prog-list';
+      ul.dataset.dayid = dayId;
+      (day.items || []).forEach((item, idx) => {
+        ul.appendChild(buildProgItem(dayId, item, idx, day.items.length));
+      });
+      card.appendChild(ul);
+      const addBtn = document.createElement('button');
+      addBtn.className = 'prog-add-btn';
+      addBtn.textContent = '+ Eintrag hinzufügen';
+      addBtn.onclick = () => addProgItem(dayId);
+      card.appendChild(addBtn);
+      container.appendChild(card);
+    });
+  }
+
+  function buildProgItem(dayId, item, idx, total) {
+    const li = document.createElement('li');
+    li.className = 'prog-item';
+    li.draggable = true;
+    li.dataset.idx = idx;
+
+    const handle = document.createElement('span');
+    handle.className = 'prog-drag-handle';
+    handle.textContent = '⠿';
+    handle.title = 'Verschieben';
+
+    const timeInput = document.createElement('input');
+    timeInput.className = 'prog-time-edit';
+    timeInput.value = item.time || '';
+    timeInput.placeholder = 'Zeit';
+    timeInput.title = 'Zeit bearbeiten';
+    timeInput.addEventListener('change', () => saveProgItem(dayId));
+    timeInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); timeInput.blur(); }});
+
+    const textInput = document.createElement('textarea');
+    textInput.className = 'prog-text-edit';
+    textInput.value = item.text || '';
+    textInput.rows = 1;
+    textInput.placeholder = 'Programmpunkt';
+    textInput.title = 'Beschreibung bearbeiten';
+    textInput.addEventListener('input', () => { textInput.style.height = 'auto'; textInput.style.height = textInput.scrollHeight + 'px'; });
+    textInput.addEventListener('change', () => saveProgItem(dayId));
+    textInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); textInput.blur(); }});
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'prog-del-btn';
+    delBtn.textContent = '×';
+    delBtn.title = 'Löschen';
+    delBtn.onclick = () => deleteProgItem(dayId, idx);
+
+    li.appendChild(handle);
+    li.appendChild(timeInput);
+    li.appendChild(textInput);
+    li.appendChild(delBtn);
+
+    // Drag & Drop innerhalb des Tages
+    let dragSrcIdx = null;
+    li.addEventListener('dragstart', e => {
+      dragSrcIdx = idx;
+      li.classList.add('dragging-prog');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(idx));
+    });
+    li.addEventListener('dragend', () => li.classList.remove('dragging-prog'));
+    li.addEventListener('dragover', e => { e.preventDefault(); li.classList.add('drag-over-prog'); });
+    li.addEventListener('dragleave', () => li.classList.remove('drag-over-prog'));
+    li.addEventListener('drop', e => {
+      e.preventDefault();
+      li.classList.remove('drag-over-prog');
+      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIdx = idx;
+      if (fromIdx === toIdx) return;
+      const items = [...(programmData[dayId].items || [])];
+      const [moved] = items.splice(fromIdx, 1);
+      items.splice(toIdx, 0, moved);
+      programmData[dayId].items = items;
+      db.collection('programm').doc(dayId).update({ items }).catch(() => {});
+      renderProgramm();
+    });
+
+    return li;
+  }
+
+  function saveProgItem(dayId) {
+    const ul = document.querySelector('.prog-list[data-dayid="' + dayId + '"]');
+    if (!ul) return;
+    const items = [];
+    ul.querySelectorAll('.prog-item').forEach(li => {
+      items.push({
+        time: li.querySelector('.prog-time-edit').value.trim(),
+        text: li.querySelector('.prog-text-edit').value.trim()
+      });
+    });
+    programmData[dayId].items = items;
+    db.collection('programm').doc(dayId).update({ items }).catch(() => {});
+  }
+
+  function deleteProgItem(dayId, idx) {
+    const items = [...(programmData[dayId].items || [])];
+    items.splice(idx, 1);
+    programmData[dayId].items = items;
+    db.collection('programm').doc(dayId).update({ items }).catch(() => {});
+    renderProgramm();
+  }
+
+  function addProgItem(dayId) {
+    const items = [...(programmData[dayId].items || []), { time: '', text: '' }];
+    programmData[dayId].items = items;
+    db.collection('programm').doc(dayId).update({ items }).catch(() => {});
+    renderProgramm();
+    // Fokus auf das neue Zeit-Feld
+    const ul = document.querySelector('.prog-list[data-dayid="' + dayId + '"]');
+    if (ul) {
+      const last = ul.querySelectorAll('.prog-time-edit');
+      if (last.length) last[last.length - 1].focus();
+    }
+  }
+
+  // Firestore listener
+  db.collection('programm').orderBy('order').onSnapshot(snap => {
+    programmData = {};
+    snap.forEach(doc => { programmData[doc.id] = doc.data(); });
+    renderProgramm();
+  });
 
   // ===== SPIELE =====
   function addAufgabe() {
