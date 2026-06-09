@@ -6,6 +6,84 @@
   <title>JGA Tirana</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
+    #login-overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(160deg, #fffff8 0%, #faf6ee 50%, #f5ede0 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #login-overlay.hidden { display: none; }
+    .login-box {
+      text-align: center;
+      padding: 48px 40px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 4px 32px rgba(184,151,106,0.15);
+      border-top: 2px solid #b8976a;
+      max-width: 340px;
+      width: 90%;
+    }
+    .login-box h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      color: #2c2c2c;
+      margin-bottom: 6px;
+    }
+    .login-line {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #b8976a, transparent);
+      margin: 14px auto 20px;
+    }
+    .login-box p {
+      font-size: 0.82rem;
+      color: #888;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+    }
+    .login-box input {
+      width: 100%;
+      border: 1px solid #f0e6d6;
+      border-radius: 3px;
+      padding: 11px 14px;
+      font-size: 0.92rem;
+      font-family: 'Jost', sans-serif;
+      text-align: center;
+      letter-spacing: 3px;
+      background: #faf8f5;
+      color: #2c2c2c;
+      margin-bottom: 12px;
+    }
+    .login-box input:focus { outline: none; border-color: #b8976a; }
+    .login-box button {
+      width: 100%;
+      background: #b8976a;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 11px;
+      font-size: 0.78rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: 'Jost', sans-serif;
+      transition: background 0.2s;
+    }
+    .login-box button:hover { background: #d4b896; }
+    .login-error {
+      font-size: 0.78rem;
+      color: #c4907a;
+      margin-top: 10px;
+      letter-spacing: 0.5px;
+      min-height: 18px;
+      font-family: 'Jost', sans-serif;
+    }
     :root {
       --gold:       #b8976a;
       --gold-light: #d4b896;
@@ -538,6 +616,17 @@
 </head>
 <body>
 
+<div id="login-overlay">
+  <div class="login-box">
+    <h2>JGA Tirana</h2>
+    <div class="login-line"></div>
+    <p>Bitte Passwort eingeben</p>
+    <input type="password" id="pw-input" placeholder="••••••" onkeydown="if(event.key==='Enter') checkPw()">
+    <button onclick="checkPw()">Zugang</button>
+    <div class="login-error" id="pw-error"></div>
+  </div>
+</div>
+
 <header>
   <div class="header-tag">Junggesellinnenabschied</div>
   <h1>Tirana</h1>
@@ -711,6 +800,22 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <script>
+  // ===== LOGIN =====
+  function checkPw() {
+    const val = document.getElementById('pw-input').value.trim().toLowerCase();
+    if (val === 'krissi') {
+      sessionStorage.setItem('jga-auth', '1');
+      document.getElementById('login-overlay').classList.add('hidden');
+    } else {
+      document.getElementById('pw-error').textContent = 'Falsches Passwort.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+
+  if (sessionStorage.getItem('jga-auth') === '1') {
+    document.getElementById('login-overlay').classList.add('hidden');
+  }
+
   // ===== FIREBASE =====
   const firebaseConfig = {
     apiKey: "AIzaSyADyeuEdOOPRVyq4DeOPwsE2Uor6jceRFQ",
