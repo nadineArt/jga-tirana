@@ -1106,6 +1106,7 @@
     }
     .location-card-address:hover { border-color: var(--gold-pale); }
     .location-card-address:focus { outline: none; border-color: var(--gold); background: var(--off-white); }
+    .location-card-address:empty:before { content: attr(data-placeholder); color: #ccc; font-style: italic; pointer-events: none; }
     .location-card-desc {
       font-size: 0.83rem;
       color: #555;
@@ -1121,6 +1122,7 @@
     }
     .location-card-desc:hover { border-color: var(--gold-pale); }
     .location-card-desc:focus { outline: none; border-color: var(--gold); background: var(--off-white); }
+    .location-card-desc:empty:before { content: 'Beschreibung hinzufügen...'; color: #ccc; font-style: italic; pointer-events: none; }
     .location-card-actions {
       display: flex;
       gap: 8px;
@@ -2187,11 +2189,10 @@
       .catch(() => null);
   }
 
-  // Adresse aus Website-HTML extrahieren (via CORS-Proxy)
-  // Versucht JSON-LD structured data, dann og:title/description meta tags
+  // Adresse aus Website-HTML extrahieren via CORS-Proxy
   function fetchAddressFromUrl(url) {
     const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
-    return fetch(proxyUrl)
+    return fetch(proxyUrl, { signal: AbortSignal.timeout(8000) })
       .then(r => r.json())
       .then(data => {
         if (!data || !data.contents) return null;
@@ -2199,34 +2200,43 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
 
-        // 1. JSON-LD structured data (TripAdvisor, restaurant sites etc.)
+        // 1. JSON-LD structured data — alle Typen durchsuchen
         const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
         for (const s of scripts) {
           try {
             const json = JSON.parse(s.textContent);
-            const items = Array.isArray(json) ? json : [json];
-            for (const item of items) {
-              const addr = item.address || (item['@graph'] && item['@graph'].find(x => x.address));
-              if (addr) {
-                const a = typeof addr === 'string' ? addr : addr.streetAddress || addr.addressLocality
-                  ? [addr.streetAddress, addr.addressLocality, addr.addressCountry].filter(Boolean).join(', ')
-                  : null;
-                if (a) return { address: a, description: item.description || item.name || null };
+            const candidates = [];
+            if (Array.isArray(json)) candidates.push(...json);
+            else if (json['@graph']) candidates.push(...json['@graph']);
+            else candidates.push(json);
+
+            for (const item of candidates) {
+              if (!item) continue;
+              const addr = item.address;
+              if (!addr) continue;
+              let addrStr = null;
+              if (typeof addr === 'string') {
+                addrStr = addr;
+              } else {
+                const parts = [addr.streetAddress, addr.addressLocality || addr.addressRegion, addr.addressCountry].filter(Boolean);
+                if (parts.length) addrStr = parts.join(', ');
+              }
+              if (addrStr) {
+                const desc = typeof item.description === 'string' ? item.description.substring(0, 200) : null;
+                return { address: addrStr, description: desc };
               }
             }
           } catch(e) {}
         }
 
-        // 2. TripAdvisor spezifisch: Koordinaten aus URL oder data-attrs
-        const coordsFromUrl = (html.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
-                               html.match(/lat[itude]*["': ]+(-?\d+\.\d+).*?lng|lon[gitude]*["': ]+(-?\d+\.\d+)/i));
-        const gmCoords = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-        if (gmCoords) {
-          return reverseGeocode(parseFloat(gmCoords[1]), parseFloat(gmCoords[2]))
+        // 2. TripAdvisor/allgemein: Koordinaten aus HTML-Inhalt extrahieren
+        const latMatch = html.match(/"latitude"\s*:\s*"?(-?\d+\.\d+)"?/);
+        const lngMatch = html.match(/"longitude"\s*:\s*"?(-?\d+\.\d+)"?/);
+        if (latMatch && lngMatch) {
+          return reverseGeocode(parseFloat(latMatch[1]), parseFloat(lngMatch[1]))
             .then(addr => addr ? { address: addr, description: null } : null);
         }
 
-        // 3. Meta description als Fallback für Beschreibung, kein Adress-Fund
         return null;
       })
       .catch(() => null);
@@ -2296,12 +2306,22 @@
     const lat = coords ? coords.lat : null;
     const lng = coords ? coords.lng : null;
 
-    db.collection(type).add({ name, url, address, description, lat, lng, createdAt: Date.now() }).then(() => {
+    db.collection(type).add({ name, url, address, description, lat, lng, createdAt: Date.now() }).then(ref => {
       document.getElementById(type + '-name').value = '';
       document.getElementById(type + '-url').value = '';
       document.getElementById(type + '-address').value = '';
       document.getElementById(type + '-desc').value = '';
       document.getElementById(type + '-url-hint').textContent = '';
+      // Koordinaten via Geocoding nachholen falls Adresse bekannt aber keine Coords
+      if (address && !lat) {
+        fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(address + ', Tirana') + '&format=json&limit=1')
+          .then(r => r.json())
+          .then(results => {
+            if (results && results[0]) {
+              ref.update({ lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) });
+            }
+          }).catch(() => {});
+      }
     });
   }
 
@@ -2310,26 +2330,17 @@
     db.collection(type).doc(id).delete();
   }
 
-  function updateLocationField(type, id, field, value) {
-    db.collection(type).doc(id).update({ [field]: value });
-  }
-
   function renderLocations(type, items) {
     const grid = document.getElementById(type + '-grid');
     grid.innerHTML = '';
 
     items.forEach(item => {
-      const isMaps = isGoogleMapsUrl(item.url);
-      const coords = item.lat && item.lng ? { lat: item.lat, lng: item.lng } : null;
-
-      // Create card
       const card = document.createElement('div');
       card.className = 'location-card';
 
       const urlBtn = item.url
         ? `<a class="location-link-btn" href="${item.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 Link öffnen</a>`
         : '';
-      const mapsBadge = isMaps ? `<span class="location-maps-badge">📍 Maps</span>` : '';
 
       card.innerHTML = `
         <div class="location-tooltip">
@@ -2340,36 +2351,48 @@
         <div class="location-card-name">${item.name}</div>
         <div class="location-card-address" contenteditable="true"
           data-placeholder="Adresse hinzufügen"
-          onblur="updateLocationField('${type}','${item.id}','address',this.textContent.trim())"
+          onblur="saveLocationField('${type}','${item.id}','address',this)"
           onclick="event.stopPropagation()"
         >${item.address || ''}</div>
         <div class="location-card-desc" contenteditable="true"
-          onblur="updateLocationField('${type}','${item.id}','description',this.textContent.trim())"
+          onblur="saveLocationField('${type}','${item.id}','description',this)"
           onclick="event.stopPropagation()"
         >${item.description || ''}</div>
         <div class="location-card-actions">
           ${urlBtn}
-          ${mapsBadge}
           <button class="location-del-btn" onclick="event.stopPropagation(); deleteLocation('${type}','${item.id}')" title="Löschen">×</button>
         </div>`;
 
-      // Placeholder styling for empty contenteditable
-      const addrEl = card.querySelector('.location-card-address');
-      const descEl = card.querySelector('.location-card-desc');
-      if (!item.address) addrEl.style.color = '#bbb';
-      if (!item.description) descEl.style.color = '#bbb';
-      addrEl.addEventListener('focus', () => { if (!addrEl.textContent.trim()) addrEl.style.color = ''; });
-      addrEl.addEventListener('blur', () => { if (!addrEl.textContent.trim()) addrEl.style.color = '#bbb'; });
-      descEl.addEventListener('focus', () => { if (!descEl.textContent.trim()) descEl.style.color = ''; });
-      descEl.addEventListener('blur', () => { if (!descEl.textContent.trim()) descEl.style.color = '#bbb'; });
-
-      // Click card opens URL
       card.addEventListener('click', () => {
         if (item.url) window.open(item.url, '_blank', 'noopener');
       });
 
       grid.appendChild(card);
     });
+  }
+
+  function saveLocationField(type, id, field, el) {
+    const value = el.textContent.trim();
+    const update = { [field]: value };
+    // Wenn Adresse gesetzt und noch keine Koordinaten: versuche Geocoding
+    if (field === 'address' && value) {
+      const coords = parseCoords('', value);
+      if (coords) {
+        update.lat = coords.lat;
+        update.lng = coords.lng;
+      } else {
+        // Nominatim forward geocoding
+        fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(value + ', Tirana') + '&format=json&limit=1&accept-language=de')
+          .then(r => r.json())
+          .then(results => {
+            if (results && results[0]) {
+              db.collection(type).doc(id).update({ lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) });
+              updateMainMap();
+            }
+          }).catch(() => {});
+      }
+    }
+    db.collection(type).doc(id).update(update);
   }
 
   // ===== FIRESTORE LISTENERS =====
