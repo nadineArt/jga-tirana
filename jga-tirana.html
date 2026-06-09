@@ -2187,13 +2187,63 @@
       .catch(() => null);
   }
 
+  // Adresse aus Website-HTML extrahieren (via CORS-Proxy)
+  // Versucht JSON-LD structured data, dann og:title/description meta tags
+  function fetchAddressFromUrl(url) {
+    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    return fetch(proxyUrl)
+      .then(r => r.json())
+      .then(data => {
+        if (!data || !data.contents) return null;
+        const html = data.contents;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // 1. JSON-LD structured data (TripAdvisor, restaurant sites etc.)
+        const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+        for (const s of scripts) {
+          try {
+            const json = JSON.parse(s.textContent);
+            const items = Array.isArray(json) ? json : [json];
+            for (const item of items) {
+              const addr = item.address || (item['@graph'] && item['@graph'].find(x => x.address));
+              if (addr) {
+                const a = typeof addr === 'string' ? addr : addr.streetAddress || addr.addressLocality
+                  ? [addr.streetAddress, addr.addressLocality, addr.addressCountry].filter(Boolean).join(', ')
+                  : null;
+                if (a) return { address: a, description: item.description || item.name || null };
+              }
+            }
+          } catch(e) {}
+        }
+
+        // 2. TripAdvisor spezifisch: Koordinaten aus URL oder data-attrs
+        const coordsFromUrl = (html.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
+                               html.match(/lat[itude]*["': ]+(-?\d+\.\d+).*?lng|lon[gitude]*["': ]+(-?\d+\.\d+)/i));
+        const gmCoords = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (gmCoords) {
+          return reverseGeocode(parseFloat(gmCoords[1]), parseFloat(gmCoords[2]))
+            .then(addr => addr ? { address: addr, description: null } : null);
+        }
+
+        // 3. Meta description als Fallback für Beschreibung, kein Adress-Fund
+        return null;
+      })
+      .catch(() => null);
+  }
+
+  // Debounce-Timer für URL-Input
+  let urlCheckTimer = {};
+
   function checkLocationUrl(type) {
     const url = document.getElementById(type + '-url').value.trim();
     const hint = document.getElementById(type + '-url-hint');
     const addrInput = document.getElementById(type + '-address');
+    const descInput = document.getElementById(type + '-desc');
 
     if (!url) { hint.textContent = ''; return; }
 
+    // Koordinaten direkt aus URL (Google Maps @lat,lng)
     const coords = parseCoords(url, '');
     if (coords) {
       hint.textContent = '⏳ Adresse wird geladen...';
@@ -2203,17 +2253,36 @@
           addrInput.value = addr;
           hint.textContent = '✓ Adresse automatisch gefunden';
           hint.style.color = 'var(--sage)';
-        } else if (!addr) {
-          hint.textContent = 'Koordinaten erkannt — Adresse bitte manuell eintragen.';
+        } else {
+          hint.textContent = coords ? 'Koordinaten erkannt' : '';
           hint.style.color = 'var(--text-muted)';
         }
       });
-    } else if (isGoogleMapsUrl(url)) {
-      hint.textContent = 'Google Maps Link — Adresse bitte manuell eintragen.';
-      hint.style.color = 'var(--text-muted)';
-    } else {
-      hint.textContent = '';
+      return;
     }
+
+    // Debounce: erst nach 800ms nach dem letzten Tastendruck fetchen
+    clearTimeout(urlCheckTimer[type]);
+    hint.textContent = '⏳ Link wird ausgewertet...';
+    hint.style.color = 'var(--text-muted)';
+
+    urlCheckTimer[type] = setTimeout(() => {
+      fetchAddressFromUrl(url).then(result => {
+        if (result && typeof result === 'object' && result.address) {
+          if (!addrInput.value) addrInput.value = result.address;
+          if (result.description && !descInput.value) descInput.value = result.description.substring(0, 200);
+          hint.textContent = '✓ Adresse automatisch gefunden';
+          hint.style.color = 'var(--sage)';
+        } else if (typeof result === 'string' && result) {
+          if (!addrInput.value) addrInput.value = result;
+          hint.textContent = '✓ Adresse automatisch gefunden';
+          hint.style.color = 'var(--sage)';
+        } else {
+          hint.textContent = 'Adresse nicht automatisch erkannt — bitte manuell eintragen.';
+          hint.style.color = 'var(--text-muted)';
+        }
+      });
+    }, 800);
   }
 
   function addLocation(type) {
