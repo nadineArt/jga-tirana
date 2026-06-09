@@ -597,22 +597,188 @@
       padding: 6px 0;
     }
 
-    /* TODO: Löschen & Hinzufügen */
-    .todo-del-btn {
-      background: none;
-      border: none;
-      color: #ddd;
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 0 4px;
-      flex-shrink: 0;
-      line-height: 1;
-      transition: color 0.2s;
-      align-self: flex-start;
-      margin-top: 1px;
+    /* ===== KANBAN ===== */
+    .kanban-board {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      overflow-x: auto;
+      padding-bottom: 16px;
     }
-    .todo-del-btn:hover { color: var(--rose); }
+    .kanban-col {
+      flex: 1;
+      min-width: 250px;
+      background: var(--off-white);
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--gold-pale);
+    }
+    .kanban-col-header {
+      padding: 11px 14px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--gold-pale);
+      color: var(--text-muted);
+    }
+    .kanban-col[data-status="in_arbeit"] .kanban-col-header { border-bottom-color: var(--rose); color: var(--rose); }
+    .kanban-col[data-status="done"] .kanban-col-header { border-bottom-color: var(--sage); color: var(--sage); }
+    .kanban-col-count {
+      background: var(--gold-pale);
+      color: var(--gold);
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+    .kanban-cards {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 80px;
+      transition: background 0.15s;
+    }
+    .kanban-cards.drag-over { background: rgba(184,151,106,0.08); }
+    .kanban-card {
+      background: var(--white);
+      border-radius: 5px;
+      padding: 11px 12px 9px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      cursor: grab;
+      border-left: 3px solid var(--gold-pale);
+      transition: box-shadow 0.15s, opacity 0.15s;
+    }
+    .kanban-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+    .kanban-card.dragging { opacity: 0.35; cursor: grabbing; }
+    .kanban-col[data-status="in_arbeit"] .kanban-card { border-left-color: var(--rose); }
+    .kanban-col[data-status="done"] .kanban-card { border-left-color: var(--sage); }
+    .card-phase {
+      font-size: 0.59rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .card-text {
+      font-size: 0.83rem;
+      color: var(--text);
+      font-weight: 300;
+      line-height: 1.45;
+      margin-bottom: 8px;
+    }
+    .kanban-col[data-status="done"] .card-text { text-decoration: line-through; color: var(--text-muted); }
+    .card-persons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 7px;
+      align-items: center;
+    }
+    .card-person-chip {
+      background: var(--gold-pale);
+      color: var(--gold);
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-size: 0.66rem;
+      font-weight: 500;
+    }
+    .card-assign-btn {
+      background: none;
+      border: 1px dashed var(--gold-pale);
+      color: var(--text-muted);
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 0.66rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .card-assign-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .card-assign-panel {
+      display: none;
+      background: var(--off-white);
+      border-radius: 4px;
+      padding: 8px 10px;
+      margin-bottom: 7px;
+      border: 1px solid var(--gold-pale);
+    }
+    .card-assign-panel.visible { display: block; }
+    .card-assign-panel-title {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+    .card-assign-persons { display: flex; flex-wrap: wrap; gap: 5px; }
+    .person-toggle {
+      background: white;
+      border: 1px solid var(--gold-pale);
+      border-radius: 10px;
+      padding: 3px 10px;
+      font-size: 0.71rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      color: var(--text-muted);
+    }
+    .person-toggle.active { background: var(--gold-pale); border-color: var(--gold); color: var(--gold); font-weight: 500; }
+    .card-footer {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid var(--off-white);
+    }
+    .card-status-select {
+      font-size: 0.69rem;
+      border: 1px solid var(--gold-pale);
+      border-radius: 3px;
+      padding: 2px 4px;
+      font-family: inherit;
+      background: white;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .card-note-btn { background: none; border: none; color: var(--text-muted); font-size: 0.71rem; cursor: pointer; font-family: inherit; padding: 0; letter-spacing: 0.5px; transition: color 0.2s; }
+    .card-note-btn:hover { color: var(--gold); }
+    .card-del-btn { background: none; border: none; color: #ddd; font-size: 1rem; cursor: pointer; padding: 0; margin-left: auto; line-height: 1; transition: color 0.2s; }
+    .card-del-btn:hover { color: var(--rose); }
+    .card-notes { margin-top: 6px; }
+    .card-note { background: var(--off-white); border-radius: 3px; padding: 6px 8px; margin-bottom: 4px; }
+    .card-note-meta { font-size: 0.62rem; color: var(--text-muted); margin-bottom: 2px; }
+    .card-note-text { font-size: 0.78rem; font-weight: 300; }
+    .card-note-form {
+      display: none;
+      background: var(--off-white);
+      border-radius: 4px;
+      padding: 8px;
+      margin-top: 8px;
+    }
+    .card-note-form.visible { display: block; }
+    .card-note-form input, .card-note-form textarea {
+      width: 100%;
+      border: 1px solid var(--gold-pale);
+      border-radius: 3px;
+      padding: 5px 8px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      background: white;
+      margin-bottom: 5px;
+      font-weight: 300;
+    }
+    .card-note-form textarea { height: 55px; resize: vertical; }
+    .card-note-form-btns { display: flex; gap: 6px; }
 
+    /* Add-Todo-Form */
     .add-todo-toggle {
       background: none;
       border: 1px dashed var(--gold-pale);
@@ -624,16 +790,15 @@
       text-transform: uppercase;
       cursor: pointer;
       font-family: inherit;
-      margin-bottom: 24px;
+      margin-bottom: 18px;
       transition: all 0.2s;
     }
     .add-todo-toggle:hover { background: var(--gold-pale); }
-
     .add-todo-form {
       background: var(--white);
       border-radius: 4px;
       padding: 20px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       box-shadow: 0 1px 8px rgba(0,0,0,0.05);
       border-left: 3px solid var(--gold);
       display: none;
@@ -787,8 +952,6 @@
     <div class="add-todo-form" id="add-todo-form">
       <label>Aufgabe *</label>
       <textarea id="new-todo-text" placeholder="Was muss erledigt werden?"></textarea>
-      <label>Zuständig</label>
-      <input type="text" id="new-todo-person" placeholder="z.B. Maria, Alle, Jenny & Vera">
       <label>Phase</label>
       <select id="new-todo-phase">
         <option value="Sofort">Sofort</option>
@@ -803,7 +966,20 @@
       </div>
     </div>
 
-    <div id="todo-list"></div>
+    <div class="kanban-board" id="kanban-board">
+      <div class="kanban-col" data-status="offen">
+        <div class="kanban-col-header">Offen <span class="kanban-col-count" id="count-offen">0</span></div>
+        <div class="kanban-cards" id="col-offen"></div>
+      </div>
+      <div class="kanban-col" data-status="in_arbeit">
+        <div class="kanban-col-header">In Arbeit <span class="kanban-col-count" id="count-in_arbeit">0</span></div>
+        <div class="kanban-cards" id="col-in_arbeit"></div>
+      </div>
+      <div class="kanban-col" data-status="done">
+        <div class="kanban-col-header">Done <span class="kanban-col-count" id="count-done">0</span></div>
+        <div class="kanban-cards" id="col-done"></div>
+      </div>
+    </div>
   </section>
 
   <!-- ===== SPIELE ===== -->
@@ -946,93 +1122,152 @@
     { nr: 26, text: 'Beach Bar nahe Tirana recherchieren — classy, gut bewertet', person: 'Melissa & Dajenne', phase: 'Recherche für Tirana (bis Abreise)', done: false },
   ];
 
-  // Alle Todos aus Firestore (lebende Daten) — sofort mit Seed befüllt als Fallback
-  let allTodos = TODO_SEED.map(t => ({ id: 'seed_' + t.nr, ...t }));
-  renderTodos();
+  const TEILNEHMERINNEN = ['Maria', 'Melissa', 'Jenny', 'Nicole', 'Dajenne', 'Nadine', 'Vera', 'Krissi'];
 
-  // Seed: Todos einmalig in Firestore schreiben, falls noch nicht vorhanden
+  // Alle Todos aus Firestore — sofort mit Seed befüllt als Fallback
+  let allTodos = TODO_SEED.map(t => ({
+    id: 'seed_' + t.nr, ...t,
+    status: t.done ? 'done' : 'offen',
+    persons: t.person ? t.person.split(/[,&]/).map(s => s.trim()).filter(s => TEILNEHMERINNEN.includes(s)) : []
+  }));
+  renderKanban();
+
+  // Seed einmalig in Firestore schreiben
   function seedTodos() {
     const col = db.collection('todos_data');
     col.get().then(snap => {
       if (snap.empty) {
         const batch = db.batch();
         TODO_SEED.forEach(t => {
+          const persons = t.person ? t.person.split(/[,&]/).map(s => s.trim()).filter(s => TEILNEHMERINNEN.includes(s)) : [];
           batch.set(col.doc('seed_' + t.nr), {
-            nr: t.nr, text: t.text, person: t.person, phase: t.phase, done: t.done, seed: true
+            nr: t.nr, text: t.text, person: t.person, persons,
+            phase: t.phase, status: t.done ? 'done' : 'offen', seed: true
           });
         });
         batch.commit();
       }
-    }).catch(() => {}); // Firestore-Fehler (z.B. Regeln) still ignorieren
+    }).catch(() => {});
   }
   seedTodos();
 
-  // ===== TODOS RENDERN =====
-  const PHASE_ORDER = [
-    'Sofort',
-    'Vorbereitung (bis Anfang Juli)',
-    '1–2 Wochen vor Reise',
-    'Bis 13. Juli',
-    'Recherche für Tirana (bis Abreise)'
-  ];
+  // ===== KANBAN RENDERN =====
+  let dragId = null;
 
-  function renderTodos() {
-    const list = document.getElementById('todo-list');
-    list.innerHTML = '';
-
-    // Phasen in gewünschter Reihenfolge, neue Phasen ans Ende
-    const usedPhases = [...new Set(allTodos.map(t => t.phase))];
-    const orderedPhases = [
-      ...PHASE_ORDER.filter(p => usedPhases.includes(p)),
-      ...usedPhases.filter(p => !PHASE_ORDER.includes(p))
-    ];
-
-    orderedPhases.forEach(phase => {
-      const phaseTodos = allTodos.filter(t => t.phase === phase);
-      if (!phaseTodos.length) return;
-      const sec = document.createElement('div');
-      sec.className = 'todo-section';
-      sec.innerHTML = '<h3>' + phase + '</h3>';
-      phaseTodos.forEach(todo => {
-        const item = document.createElement('div');
-        item.className = 'todo-item' + (todo.done ? ' done' : '');
-        item.id = 'todo-' + todo.id;
-        const personHtml = todo.person ? '<span class="person">' + todo.person + '</span>: ' : '';
-        item.innerHTML = `
-          <div class="todo-header">
-            <input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo('${todo.id}', this)">
-            <div class="todo-content">
-              <div class="todo-text"><span class="todo-nr">#${todo.nr}</span>${personHtml}${todo.text}</div>
-              <div class="todo-notes" id="notes-${todo.id}"></div>
-              <button class="add-note-btn" onclick="toggleNoteForm('${todo.id}')">+ Notiz hinzufügen</button>
-              <div class="note-form" id="form-${todo.id}">
-                <input type="text" placeholder="Dein Name" id="name-${todo.id}">
-                <textarea placeholder="Notiz..." id="notetext-${todo.id}"></textarea>
-                <div class="note-form-buttons">
-                  <button class="btn-save" onclick="saveNote('${todo.id}')">Speichern</button>
-                  <button class="btn-cancel" onclick="toggleNoteForm('${todo.id}')">Abbrechen</button>
-                </div>
-              </div>
-            </div>
-            <button class="todo-del-btn" onclick="deleteTodo('${todo.id}')" title="To-do löschen">×</button>
-          </div>`;
-        sec.appendChild(item);
-      });
-      list.appendChild(sec);
+  function renderKanban() {
+    ['offen','in_arbeit','done'].forEach(status => {
+      const col = document.getElementById('col-' + status);
+      col.innerHTML = '';
+      const todos = allTodos.filter(t => (t.status || 'offen') === status);
+      document.getElementById('count-' + status).textContent = todos.length;
+      todos.forEach(todo => col.appendChild(buildCard(todo)));
     });
     updateProgress();
+    setupDrop();
+  }
+
+  function buildCard(todo) {
+    const card = document.createElement('div');
+    card.className = 'kanban-card';
+    card.draggable = true;
+    card.dataset.id = todo.id;
+
+    const persons = todo.persons || [];
+    const chipsHtml = persons.length
+      ? persons.map(p => `<span class="card-person-chip">${p}</span>`).join('')
+      : '';
+
+    const togglesHtml = TEILNEHMERINNEN.map(p =>
+      `<button class="person-toggle${persons.includes(p) ? ' active' : ''}" onclick="togglePerson('${todo.id}','${p}',this)">${p}</button>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="card-phase">${todo.phase}</div>
+      <div class="card-text">${todo.text}</div>
+      <div class="card-persons" id="chips-${todo.id}">${chipsHtml}
+        <button class="card-assign-btn" onclick="toggleAssignPanel('${todo.id}')">+ Person</button>
+      </div>
+      <div class="card-assign-panel" id="assign-${todo.id}">
+        <div class="card-assign-panel-title">Zuständig</div>
+        <div class="card-assign-persons" id="toggles-${todo.id}">${togglesHtml}</div>
+      </div>
+      <div class="card-notes" id="card-notes-${todo.id}"></div>
+      <div class="card-note-form" id="card-form-${todo.id}">
+        <input type="text" placeholder="Dein Name" id="card-name-${todo.id}">
+        <textarea placeholder="Notiz..." id="card-notetext-${todo.id}"></textarea>
+        <div class="card-note-form-btns">
+          <button class="btn-save" onclick="saveCardNote('${todo.id}')">Speichern</button>
+          <button class="btn-cancel" onclick="toggleCardNoteForm('${todo.id}')">Abbrechen</button>
+        </div>
+      </div>
+      <div class="card-footer">
+        <select class="card-status-select" onchange="setStatus('${todo.id}',this.value)">
+          <option value="offen"${(todo.status||'offen')==='offen'?' selected':''}>Offen</option>
+          <option value="in_arbeit"${todo.status==='in_arbeit'?' selected':''}>In Arbeit</option>
+          <option value="done"${todo.status==='done'?' selected':''}>Done</option>
+        </select>
+        <button class="card-note-btn" onclick="toggleCardNoteForm('${todo.id}')">+ Notiz</button>
+        <button class="card-del-btn" onclick="deleteTodo('${todo.id}')" title="Löschen">×</button>
+      </div>`;
+
+    card.addEventListener('dragstart', e => { dragId = todo.id; card.classList.add('dragging'); });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    return card;
+  }
+
+  function setupDrop() {
+    document.querySelectorAll('.kanban-cards').forEach(zone => {
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        const newStatus = zone.closest('.kanban-col').dataset.status;
+        if (dragId) setStatus(dragId, newStatus);
+        dragId = null;
+      });
+    });
+  }
+
+  function setStatus(id, newStatus) {
+    db.collection('todos_data').doc(id).update({ status: newStatus }).catch(() => {
+      // Fallback für Seed-Todos ohne Firestore-Dokument
+      const t = allTodos.find(x => x.id === id);
+      if (t) { t.status = newStatus; renderKanban(); }
+    });
+  }
+
+  function toggleAssignPanel(id) {
+    document.getElementById('assign-' + id).classList.toggle('visible');
+  }
+
+  function togglePerson(id, person, btn) {
+    const todo = allTodos.find(t => t.id === id);
+    if (!todo) return;
+    const persons = [...(todo.persons || [])];
+    const idx = persons.indexOf(person);
+    if (idx > -1) persons.splice(idx, 1); else persons.push(person);
+    db.collection('todos_data').doc(id).update({ persons }).catch(() => {
+      todo.persons = persons;
+      const chips = document.getElementById('chips-' + id);
+      const assignBtn = chips.querySelector('.card-assign-btn');
+      chips.querySelectorAll('.card-person-chip').forEach(c => c.remove());
+      persons.forEach(p => {
+        const chip = document.createElement('span');
+        chip.className = 'card-person-chip';
+        chip.textContent = p;
+        chips.insertBefore(chip, assignBtn);
+      });
+    });
+    btn.classList.toggle('active');
   }
 
   function updateProgress() {
     const total = allTodos.length;
-    const done = allTodos.filter(t => t.done).length;
+    const done = allTodos.filter(t => t.status === 'done').length;
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
     document.getElementById('progressBar').style.width = pct + '%';
     document.getElementById('progressLabel').textContent = done + ' von ' + total + ' To-dos erledigt (' + pct + '%)';
-  }
-
-  function toggleTodo(id, checkbox) {
-    db.collection('todos_data').doc(id).update({ done: checkbox.checked });
   }
 
   function deleteTodo(id) {
@@ -1048,48 +1283,41 @@
   function createTodo() {
     const text = document.getElementById('new-todo-text').value.trim();
     if (!text) return;
-    const person = document.getElementById('new-todo-person').value.trim();
     const phase = document.getElementById('new-todo-phase').value;
     const maxNr = allTodos.reduce((m, t) => Math.max(m, t.nr || 0), 0);
     db.collection('todos_data').add({
-      nr: maxNr + 1,
-      text,
-      person,
-      phase,
-      done: false,
-      seed: false
+      nr: maxNr + 1, text, persons: [], person: '', phase, status: 'offen', seed: false
     }).then(() => {
       document.getElementById('new-todo-text').value = '';
-      document.getElementById('new-todo-person').value = '';
       document.getElementById('new-todo-phase').value = 'Sofort';
       document.getElementById('add-todo-form').classList.remove('visible');
     });
   }
 
-  function toggleNoteForm(id) {
-    document.getElementById('form-' + id).classList.toggle('visible');
+  function toggleCardNoteForm(id) {
+    document.getElementById('card-form-' + id).classList.toggle('visible');
   }
 
-  function saveNote(id) {
-    const name = document.getElementById('name-' + id).value.trim();
-    const text = document.getElementById('notetext-' + id).value.trim();
+  function saveCardNote(id) {
+    const name = document.getElementById('card-name-' + id).value.trim();
+    const text = document.getElementById('card-notetext-' + id).value.trim();
     if (!text) return;
     const now = new Date();
     const meta = (name || 'Unbekannt') + ' · ' + now.toLocaleDateString('de-DE') + ', ' + now.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
     db.collection('notes').doc(String(id)).set({
       items: firebase.firestore.FieldValue.arrayUnion({ meta, text })
     }, { merge: true });
-    document.getElementById('name-' + id).value = '';
-    document.getElementById('notetext-' + id).value = '';
-    document.getElementById('form-' + id).classList.remove('visible');
+    document.getElementById('card-name-' + id).value = '';
+    document.getElementById('card-notetext-' + id).value = '';
+    document.getElementById('card-form-' + id).classList.remove('visible');
   }
 
-  function renderNote(id, note) {
-    const container = document.getElementById('notes-' + id);
+  function renderCardNote(id, note) {
+    const container = document.getElementById('card-notes-' + id);
     if (!container) return;
     const div = document.createElement('div');
-    div.className = 'note';
-    div.innerHTML = '<div class="note-meta">' + note.meta + '</div><div class="note-text">' + note.text + '</div>';
+    div.className = 'card-note';
+    div.innerHTML = '<div class="card-note-meta">' + note.meta + '</div><div class="card-note-text">' + note.text + '</div>';
     container.appendChild(div);
   }
 
@@ -1214,15 +1442,24 @@
 
   // Todos: vollständige Daten aus todos_data
   db.collection('todos_data').orderBy('nr').onSnapshot(snapshot => {
-    allTodos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderTodos();
+    allTodos = snapshot.docs.map(doc => {
+      const d = doc.data();
+      // persons-Feld migrieren falls noch nicht vorhanden
+      if (!d.persons && d.person) {
+        d.persons = d.person.split(/[,&]/).map(s => s.trim()).filter(s => TEILNEHMERINNEN.includes(s));
+      } else if (!d.persons) {
+        d.persons = [];
+      }
+      return { id: doc.id, ...d };
+    });
+    renderKanban();
     // Notizen nach Render neu laden
     db.collection('notes').get().then(snap => {
       snap.forEach(doc => {
-        const container = document.getElementById('notes-' + doc.id);
+        const container = document.getElementById('card-notes-' + doc.id);
         if (!container) return;
         container.innerHTML = '';
-        (doc.data().items || []).forEach(n => renderNote(doc.id, n));
+        (doc.data().items || []).forEach(n => renderCardNote(doc.id, n));
       });
     });
   });
@@ -1230,10 +1467,10 @@
   // Notizen live
   db.collection('notes').onSnapshot(snapshot => {
     snapshot.docChanges().forEach(change => {
-      const container = document.getElementById('notes-' + change.doc.id);
+      const container = document.getElementById('card-notes-' + change.doc.id);
       if (!container) return;
       container.innerHTML = '';
-      (change.doc.data().items || []).forEach(n => renderNote(change.doc.id, n));
+      (change.doc.data().items || []).forEach(n => renderCardNote(change.doc.id, n));
     });
   });
 
