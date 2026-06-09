@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JGA Tirana</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     #login-overlay {
       position: fixed;
@@ -1128,6 +1127,22 @@
       border: 1px solid var(--gold-pale);
       box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     }
+    .map-shortcut {
+      display: inline-block;
+      font-size: 0.78rem;
+      color: var(--gold);
+      text-decoration: none;
+      margin-bottom: 24px;
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s;
+    }
+    .map-shortcut:hover { opacity: 0.7; }
+    .mymaps-wrap {
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--gold-pale);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    }
 
     footer {
       text-align: center;
@@ -1175,6 +1190,7 @@
   <a href="#einkauf">Einkauf</a>
   <a href="#bars">Bars &amp; Clubs</a>
   <a href="#restaurants">Restaurants</a>
+  <a href="#karte">Karte</a>
 </nav>
 
 <div class="container">
@@ -1372,7 +1388,7 @@
     </div>
 
     <div class="location-grid" id="bars-grid"></div>
-    <div class="map-container" id="bars-map"></div>
+    <a href="#karte" class="map-shortcut">📍 Alle Locations auf der Karte ansehen →</a>
   </section>
 
   <!-- ===== RESTAURANTS ===== -->
@@ -1395,7 +1411,28 @@
     </div>
 
     <div class="location-grid" id="restaurants-grid"></div>
-    <div class="map-container" id="restaurants-map"></div>
+    <a href="#karte" class="map-shortcut">📍 Alle Locations auf der Karte ansehen →</a>
+  </section>
+
+  <!-- ===== KARTE ===== -->
+  <section id="karte">
+    <h2>Tirana Map</h2>
+    <div class="section-rule"></div>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; font-weight: 300;">Alle gespeicherten Bars, Clubs, Restaurants und Sightseeing-Spots auf einen Blick.</p>
+    <div class="mymaps-wrap">
+      <iframe
+        src="https://www.google.com/maps/d/u/1/embed?mid=1MZmZ4K7CKvvnFEOBiYBsk_Fz_-ImUKs"
+        width="100%"
+        height="520"
+        style="border:0; border-radius: 6px;"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; text-align: center;">
+      <a href="https://www.google.com/maps/d/u/1/edit?mid=1MZmZ4K7CKvvnFEOBiYBsk_Fz_-ImUKs" target="_blank" rel="noopener" style="color: var(--gold);">Karte in Google My Maps bearbeiten →</a>
+    </p>
   </section>
 
 </div>
@@ -1405,7 +1442,6 @@
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
   // ===== USERNAME =====
@@ -1903,20 +1939,6 @@
 
   // ===== BARS & CLUBS / RESTAURANTS =====
 
-  // Leaflet maps — initialized lazily when section comes into view
-  let mapsInitialized = { bars: false, restaurants: false };
-  let leafletMaps = {};
-  let locationMarkers = { bars: {}, restaurants: {} };
-
-  function initMap(type) {
-    if (mapsInitialized[type]) return;
-    mapsInitialized[type] = true;
-    const map = L.map(type + '-map').setView([41.3275, 19.8187], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
-    leafletMaps[type] = map;
-  }
 
   // Parse coordinates from address (lat,lng) or Google Maps URL
   function parseCoords(url, address) {
@@ -2006,13 +2028,8 @@
   }
 
   function renderLocations(type, items) {
-    initMap(type);
     const grid = document.getElementById(type + '-grid');
     grid.innerHTML = '';
-
-    // Clear existing markers
-    Object.values(locationMarkers[type]).forEach(m => m.remove());
-    locationMarkers[type] = {};
 
     items.forEach(item => {
       const isMaps = isGoogleMapsUrl(item.url);
@@ -2065,24 +2082,7 @@
       });
 
       grid.appendChild(card);
-
-      // Add marker to map if coords available
-      if (coords && leafletMaps[type]) {
-        const marker = L.marker([coords.lat, coords.lng])
-          .addTo(leafletMaps[type])
-          .bindPopup(`<strong>${item.name}</strong>${item.description ? '<br>' + item.description : ''}`);
-        locationMarkers[type][item.id] = marker;
-      }
     });
-
-    // Fit map to markers if any exist
-    const markerList = Object.values(locationMarkers[type]);
-    if (markerList.length > 0 && leafletMaps[type]) {
-      try {
-        const group = L.featureGroup(markerList);
-        leafletMaps[type].fitBounds(group.getBounds().pad(0.3));
-      } catch(e) {}
-    }
   }
 
   // ===== FIRESTORE LISTENERS =====
@@ -2162,11 +2162,6 @@
     renderLocations('restaurants', items);
   });
 
-  // Initialize maps on page load (so they render correctly)
-  window.addEventListener('load', () => {
-    initMap('bars');
-    initMap('restaurants');
-  });
 
 </script>
 
