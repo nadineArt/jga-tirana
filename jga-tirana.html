@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JGA Tirana</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     #login-overlay {
       position: fixed;
@@ -1143,6 +1144,20 @@
       border: 1px solid var(--gold-pale);
       box-shadow: 0 2px 16px rgba(0,0,0,0.07);
     }
+    .gmaps-list-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      border: 1px solid var(--gold-pale);
+      border-radius: 3px;
+      padding: 5px 12px;
+      margin-bottom: 20px;
+      transition: all 0.2s;
+    }
+    .gmaps-list-link:hover { color: var(--gold); border-color: var(--gold); background: var(--gold-pale); }
 
     footer {
       text-align: center;
@@ -1372,7 +1387,8 @@
   <section id="bars">
     <h2>Bars &amp; Clubs</h2>
     <div class="section-rule"></div>
-    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; font-weight: 300;">Locations sammeln — Adresse, Link und Notizen eintragen.</p>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; font-weight: 300;">Locations sammeln — Adresse, Link und Notizen eintragen.</p>
+    <a class="gmaps-list-link" href="https://maps.app.goo.gl/wm2y7Coy6vW3eWZu9" target="_blank" rel="noopener">📋 Google Maps Liste bearbeiten →</a>
 
     <div class="location-form">
       <label>Name der Location *</label>
@@ -1395,7 +1411,8 @@
   <section id="restaurants">
     <h2>Restaurants</h2>
     <div class="section-rule"></div>
-    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; font-weight: 300;">Restaurants sammeln — Adresse, Link und Notizen eintragen.</p>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; font-weight: 300;">Restaurants sammeln — Adresse, Link und Notizen eintragen.</p>
+    <a class="gmaps-list-link" href="https://maps.app.goo.gl/wm2y7Coy6vW3eWZu9" target="_blank" rel="noopener">📋 Google Maps Liste bearbeiten →</a>
 
     <div class="location-form">
       <label>Name des Restaurants *</label>
@@ -1418,21 +1435,9 @@
   <section id="karte">
     <h2>Tirana Map</h2>
     <div class="section-rule"></div>
-    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; font-weight: 300;">Alle gespeicherten Bars, Clubs, Restaurants und Sightseeing-Spots auf einen Blick.</p>
-    <div class="mymaps-wrap">
-      <iframe
-        src="https://www.google.com/maps/d/u/1/embed?mid=1MZmZ4K7CKvvnFEOBiYBsk_Fz_-ImUKs"
-        width="100%"
-        height="520"
-        style="border:0; border-radius: 6px;"
-        allowfullscreen
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade">
-      </iframe>
-    </div>
-    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; text-align: center;">
-      <a href="https://www.google.com/maps/d/u/1/edit?mid=1MZmZ4K7CKvvnFEOBiYBsk_Fz_-ImUKs" target="_blank" rel="noopener" style="color: var(--gold);">Karte in Google My Maps bearbeiten →</a>
-    </p>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; font-weight: 300;">Alle gespeicherten Bars, Clubs und Restaurants auf einen Blick. Marker klicken öffnet Google Maps Navigation.</p>
+    <a class="gmaps-list-link" href="https://maps.app.goo.gl/wm2y7Coy6vW3eWZu9" target="_blank" rel="noopener">📋 Google Maps Liste bearbeiten →</a>
+    <div id="main-map" style="height: 480px; border-radius: 6px; border: 1px solid var(--gold-pale); box-shadow: 0 2px 16px rgba(0,0,0,0.07);"></div>
   </section>
 
 </div>
@@ -1442,6 +1447,7 @@
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
   // ===== USERNAME =====
@@ -2150,18 +2156,100 @@
     renderEinkauf(items);
   });
 
-  // Bars
-  db.collection('bars').orderBy('createdAt').onSnapshot(snapshot => {
-    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderLocations('bars', items);
-  });
-
-  // Restaurants
+  // Restaurants Listener — Cache aktualisieren und Karte neu zeichnen
   db.collection('restaurants').orderBy('createdAt').onSnapshot(snapshot => {
-    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderLocations('restaurants', items);
+    allTodosCache.restaurants = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderLocations('restaurants', allTodosCache.restaurants);
+    updateMainMap();
   });
 
+  // ===== HAUPTKARTE (Leaflet, OpenStreetMap) =====
+  let mainMap = null;
+  let mainMarkers = { bars: {}, restaurants: {} };
+
+  // Benutzerdefiniertes Gold-Icon für Bars, Sage-Icon für Restaurants
+  const iconBars = L.divIcon({
+    html: '<div style="background:var(--gold,#b8976a);width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>',
+    className: '', iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -10]
+  });
+  const iconRestaurants = L.divIcon({
+    html: '<div style="background:#8a9e8c;width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>',
+    className: '', iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -10]
+  });
+
+  function initMainMap() {
+    if (mainMap) return;
+    mainMap = L.map('main-map').setView([41.3275, 19.8187], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(mainMap);
+    // Legende
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = () => {
+      const div = L.DomUtil.create('div');
+      div.style.cssText = 'background:white;padding:8px 12px;border-radius:4px;font-size:0.72rem;font-family:Jost,sans-serif;box-shadow:0 1px 6px rgba(0,0,0,0.12)';
+      div.innerHTML = '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="width:10px;height:10px;border-radius:50%;background:#b8976a;flex-shrink:0"></div> Bars & Clubs</div>' +
+        '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#8a9e8c;flex-shrink:0"></div> Restaurants</div>';
+      return div;
+    };
+    legend.addTo(mainMap);
+  }
+
+  function buildGoogleMapsUrl(lat, lng, name) {
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(name) + '&query_place=' + lat + ',' + lng;
+  }
+
+  function updateMainMap() {
+    initMainMap();
+    // Alle alten Marker entfernen
+    Object.values(mainMarkers.bars).forEach(m => m.remove());
+    Object.values(mainMarkers.restaurants).forEach(m => m.remove());
+    mainMarkers = { bars: {}, restaurants: {} };
+
+    const allWithCoords = [];
+
+    ['bars', 'restaurants'].forEach(type => {
+      const icon = type === 'bars' ? iconBars : iconRestaurants;
+      allTodosCache[type].forEach(item => {
+        if (!item.lat || !item.lng) return;
+        const gmUrl = buildGoogleMapsUrl(item.lat, item.lng, item.name);
+        const popupHtml = `
+          <div style="font-family:Jost,sans-serif;min-width:140px">
+            <strong style="font-size:0.85rem">${item.name}</strong>
+            ${item.address ? '<br><span style="font-size:0.72rem;color:#777">' + item.address + '</span>' : ''}
+            ${item.description ? '<br><span style="font-size:0.72rem;color:#999;margin-top:2px;display:block">' + item.description + '</span>' : ''}
+            <br><a href="${gmUrl}" target="_blank" rel="noopener"
+              style="font-size:0.72rem;color:#b8976a;text-decoration:none;margin-top:4px;display:inline-block">
+              🗺 In Google Maps öffnen →</a>
+          </div>`;
+        const marker = L.marker([item.lat, item.lng], { icon })
+          .addTo(mainMap)
+          .bindPopup(popupHtml);
+        mainMarkers[type][item.id] = marker;
+        allWithCoords.push([item.lat, item.lng]);
+      });
+    });
+
+    if (allWithCoords.length > 0) {
+      try { mainMap.fitBounds(L.latLngBounds(allWithCoords).pad(0.25)); } catch(e) {}
+    }
+  }
+
+  // Cache der Location-Daten für die Karte
+  let allTodosCache = { bars: [], restaurants: [] };
+
+  // Karte initialisieren wenn Sektion sichtbar wird
+  const mapObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { initMainMap(); updateMainMap(); mapObserver.disconnect(); } });
+  }, { threshold: 0.1 });
+  mapObserver.observe(document.getElementById('karte'));
+
+  // Bars Listener — Cache aktualisieren und Karte neu zeichnen
+  db.collection('bars').orderBy('createdAt').onSnapshot(snapshot => {
+    allTodosCache.bars = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderLocations('bars', allTodosCache.bars);
+    updateMainMap();
+  });
 
 </script>
 
