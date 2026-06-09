@@ -706,27 +706,39 @@
 
 <footer>JGA Tirana 2026 &nbsp;·&nbsp; Orga-Meeting 09.06.2026</footer>
 
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <script>
+  // ===== FIREBASE =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyADyeuEdOOPRVyq4DeOPwsE2Uor6jceRFQ",
+    authDomain: "jga-tirana.firebaseapp.com",
+    projectId: "jga-tirana",
+    storageBucket: "jga-tirana.firebasestorage.app",
+    messagingSenderId: "996777931317",
+    appId: "1:996777931317:web:d9fd2c5f3846afa1fd377c"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // ===== TODO DATEN =====
   const TODOS = [
-    // Sofort
-    { nr: 1, text: 'Reisezeitraum: <strong>Donnerstag, 16. Juli – Sonntag, 19. Juli</strong>', person: '', phase: 'Sofort', done: true },
-    { nr: 2, text: 'Budget festlegen und aufteilen — Verwaltung via <strong>Splitwise</strong> oder <strong>Tricount</strong>, Abrechnung nach dem Urlaub; zahlen & tracken: Maria, Dajenne oder Melissa', person: '', phase: 'Sofort', done: false },
-    { nr: 3, text: 'Reisezeitraum im Kalender unter <strong>falschem Titel</strong> blocken (Krissi kontrolliert Kalender)', person: 'Alle', phase: 'Sofort', done: false },
-    { nr: 4, text: 'Schwarzes Outfit in der WhatsApp-Gruppe posten zur Abstimmung', person: 'Alle Freundinnen', phase: 'Sofort', done: false },
-    { nr: 5, text: 'Partner fragen wegen Fahrt zum Flughafen Weeze (größeres Auto)', person: 'Jenny', phase: 'Sofort', done: false },
-    // Vorbereitung
-    { nr: 6, text: 'Transfer Düsseldorf HBF → Flughafen Weeze klären — 8 Personen + Gepäck (Flibco fährt Weeze nicht an)', person: 'Maria', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
-    { nr: 7, text: 'Rückfahrt vom Flughafen Weeze organisieren', person: 'Maria', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
-    { nr: 8, text: 'Unterkunft: Küchenausstattung noch klären ⚠️ — Bettwäsche ✅ Handtücher ✅ Schlafsituation ✅ (2 Doppelbetten + 2 Einzelbetten + Schlafcouch für 2 = 8 Plätze)', person: 'Maria', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
-    { nr: 9, text: 'Deko planen und organisieren — was wird mitgebracht / vor Ort besorgt?', person: 'Jenny, Dajenne & Vera', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
+    { nr: 1,  text: 'Reisezeitraum: <strong>Donnerstag, 16. Juli – Sonntag, 19. Juli</strong>', person: '', phase: 'Sofort', done: true },
+    { nr: 2,  text: 'Budget festlegen und aufteilen — Verwaltung via <strong>Splitwise</strong> oder <strong>Tricount</strong>, Abrechnung nach dem Urlaub; zahlen & tracken: Maria, Dajenne oder Melissa', person: '', phase: 'Sofort', done: false },
+    { nr: 3,  text: 'Reisezeitraum im Kalender unter <strong>falschem Titel</strong> blocken (Krissi kontrolliert Kalender)', person: 'Alle', phase: 'Sofort', done: false },
+    { nr: 4,  text: 'Schwarzes Outfit in der WhatsApp-Gruppe posten zur Abstimmung', person: 'Alle Freundinnen', phase: 'Sofort', done: false },
+    { nr: 5,  text: 'Partner fragen wegen Fahrt zum Flughafen Weeze (größeres Auto)', person: 'Jenny', phase: 'Sofort', done: false },
+    { nr: 6,  text: 'Transfer Düsseldorf HBF → Flughafen Weeze klären — 8 Personen + Gepäck (Flibco fährt Weeze nicht an)', person: 'Maria', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
+    { nr: 7,  text: 'Rückfahrt vom Flughafen Weeze organisieren', person: 'Maria', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
+    { nr: 8,  text: 'Unterkunft: Küchenausstattung noch klären ⚠️ — Bettwäsche ✅ Handtücher ✅ Schlafsituation ✅ (2 Doppelbetten + 2 Einzelbetten + Schlafcouch für 2 = 8 Plätze)', person: 'Maria', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
+    { nr: 9,  text: 'Deko planen und organisieren — was wird mitgebracht / vor Ort besorgt?', person: 'Jenny, Dajenne & Vera', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
     { nr: 10, text: 'Spielideen sammeln und an Jenny & Nadine schicken (JGA-Spiele, Trinkspiele)', person: 'Alle', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
     { nr: 11, text: 'Aufgaben-Ideen für „Bis die Braut dich enttarnt" ergänzen — Jenny & Nadine koordinieren und bereiten alles vor', person: 'Alle', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
     { nr: 12, text: 'Instax (Fujifilm Polaroid-Kamera) + genug Film mitbringen', person: 'Dajenne & Nicole', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
-    // 1-2 Wochen vorher
     { nr: 13, text: 'Party-Optionen für 18.–19. Juli recherchieren — kurz vor Reise auf ra.co/events/al/tirana und eventbrite.de schauen', person: 'Dajenne', phase: '1–2 Wochen vor Reise', done: false },
-    // Bis 13. Juli
     { nr: 14, text: 'Überraschungsplan mit Krissis Mutter absprechen (Geburtstags-Dinner als Tarnung, Gruppe crasht das Dinner am 13. Juli)', person: 'Maria', phase: 'Bis 13. Juli', done: false },
-    // Recherche Tirana
     { nr: 15, text: 'Transfer Flughafen Tirana (TIA) → Unterkunft klären — Großraum-Taxi, 2x Uber oder Shuttle für 8 Personen + Gepäck', person: 'Maria', phase: 'Recherche für Tirana (bis Abreise)', done: false },
     { nr: 16, text: 'Einkaufsmöglichkeiten für Lebensmittel in der Nähe der Unterkunft (Blloku) recherchieren', person: 'Maria', phase: 'Recherche für Tirana (bis Abreise)', done: false },
     { nr: 17, text: 'Stullen & Snacks für die Anreise vorbereiten (für alle 8 Personen)', person: 'Dajenne', phase: 'Recherche für Tirana (bis Abreise)', done: false },
@@ -741,70 +753,27 @@
     { nr: 26, text: 'Beach Bar nahe Tirana recherchieren — classy, gut bewertet', person: 'Melissa & Dajenne', phase: 'Recherche für Tirana (bis Abreise)', done: false },
   ];
 
-  // Load state from localStorage
-  function loadState() {
-    const saved = localStorage.getItem('jga-todos');
-    if (saved) {
-      const state = JSON.parse(saved);
-      TODOS.forEach(t => {
-        if (state.done && state.done[t.nr] !== undefined) t.done = state.done[t.nr];
-      });
-    }
-  }
+  // done-Status aus Firestore mergen
+  let todoState = {}; // { nr: bool }
 
-  function saveState() {
-    const done = {};
-    TODOS.forEach(t => done[t.nr] = t.done);
-    const notes = {};
-    TODOS.forEach(t => {
-      const el = document.getElementById('notes-' + t.nr);
-      if (el) {
-        notes[t.nr] = Array.from(el.querySelectorAll('.note')).map(n => ({
-          meta: n.querySelector('.note-meta').textContent,
-          text: n.querySelector('.note-text').textContent
-        }));
-      }
-    });
-    localStorage.setItem('jga-todos', JSON.stringify({ done, notes }));
-  }
-
-  function loadNotes() {
-    const saved = localStorage.getItem('jga-todos');
-    if (!saved) return;
-    const state = JSON.parse(saved);
-    if (!state.notes) return;
-    Object.entries(state.notes).forEach(([nr, notes]) => {
-      const container = document.getElementById('notes-' + nr);
-      if (!container || !notes.length) return;
-      notes.forEach(n => {
-        const div = document.createElement('div');
-        div.className = 'note';
-        div.innerHTML = '<div class="note-meta">' + n.meta + '</div><div class="note-text">' + n.text + '</div>';
-        container.appendChild(div);
-      });
-    });
-  }
-
+  // ===== TODOS RENDERN =====
   function renderTodos() {
-    loadState();
     const list = document.getElementById('todo-list');
+    list.innerHTML = '';
     const phases = [...new Set(TODOS.map(t => t.phase))];
-
     phases.forEach(phase => {
       const sec = document.createElement('div');
       sec.className = 'todo-section';
       sec.innerHTML = '<h3>' + phase + '</h3>';
-
       TODOS.filter(t => t.phase === phase).forEach(todo => {
+        const isDone = todoState[todo.nr] !== undefined ? todoState[todo.nr] : todo.done;
         const item = document.createElement('div');
-        item.className = 'todo-item' + (todo.done ? ' done' : '');
+        item.className = 'todo-item' + (isDone ? ' done' : '');
         item.id = 'todo-' + todo.nr;
-
         const personHtml = todo.person ? '<span class="person">' + todo.person + '</span>: ' : '';
-
         item.innerHTML = `
           <div class="todo-header">
-            <input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo(${todo.nr}, this)">
+            <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleTodo(${todo.nr}, this)">
             <div class="todo-content">
               <div class="todo-text"><span class="todo-nr">#${todo.nr}</span>${personHtml}${todo.text}</div>
               <div class="todo-notes" id="notes-${todo.nr}"></div>
@@ -818,29 +787,28 @@
                 </div>
               </div>
             </div>
-          </div>
-        `;
+          </div>`;
         sec.appendChild(item);
       });
       list.appendChild(sec);
     });
-
-    loadNotes();
     updateProgress();
+  }
+
+  function updateProgress() {
+    const total = TODOS.length;
+    const done = TODOS.filter(t => todoState[t.nr] !== undefined ? todoState[t.nr] : t.done).length;
+    const pct = Math.round((done / total) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = done + ' von ' + total + ' To-dos erledigt (' + pct + '%)';
   }
 
   function toggleTodo(nr, checkbox) {
-    const todo = TODOS.find(t => t.nr === nr);
-    todo.done = checkbox.checked;
-    const item = document.getElementById('todo-' + nr);
-    item.className = 'todo-item' + (todo.done ? ' done' : '');
-    saveState();
-    updateProgress();
+    db.collection('todos').doc(String(nr)).set({ done: checkbox.checked });
   }
 
   function toggleNoteForm(nr) {
-    const form = document.getElementById('form-' + nr);
-    form.classList.toggle('visible');
+    document.getElementById('form-' + nr).classList.toggle('visible');
   }
 
   function saveNote(nr) {
@@ -848,40 +816,33 @@
     const text = document.getElementById('notetext-' + nr).value.trim();
     if (!text) return;
     const now = new Date();
-    const dateStr = now.toLocaleDateString('de-DE') + ', ' + now.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
-    const label = (name || 'Unbekannt') + ' · ' + dateStr;
-
-    const container = document.getElementById('notes-' + nr);
-    const div = document.createElement('div');
-    div.className = 'note';
-    div.innerHTML = '<div class="note-meta">' + label + '</div><div class="note-text">' + text + '</div>';
-    container.appendChild(div);
-
+    const meta = (name || 'Unbekannt') + ' · ' + now.toLocaleDateString('de-DE') + ', ' + now.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+    db.collection('notes').doc(String(nr)).set({
+      items: firebase.firestore.FieldValue.arrayUnion({ meta, text })
+    }, { merge: true });
     document.getElementById('name-' + nr).value = '';
     document.getElementById('notetext-' + nr).value = '';
     document.getElementById('form-' + nr).classList.remove('visible');
-    saveState();
   }
 
-  function updateProgress() {
-    const total = TODOS.length;
-    const done = TODOS.filter(t => t.done).length;
-    const pct = Math.round((done / total) * 100);
-    document.getElementById('progressBar').style.width = pct + '%';
-    document.getElementById('progressLabel').textContent = done + ' von ' + total + ' To-dos erledigt (' + pct + '%)';
+  function renderNote(nr, note) {
+    const container = document.getElementById('notes-' + nr);
+    if (!container) return;
+    const div = document.createElement('div');
+    div.className = 'note';
+    div.innerHTML = '<div class="note-meta">' + note.meta + '</div><div class="note-text">' + note.text + '</div>';
+    container.appendChild(div);
   }
 
+  // ===== SPIELE =====
   function addAufgabe() {
     const input = document.getElementById('neue-aufgabe');
     const text = input.value.trim();
     if (!text) return;
-    const liste = document.getElementById('aufgaben-liste');
-    const div = document.createElement('div');
-    div.className = 'idee-item';
-    div.textContent = '💡 ' + text;
-    liste.appendChild(div);
+    db.collection('spiele').doc('aufgaben').set({
+      items: firebase.firestore.FieldValue.arrayUnion('💡 ' + text)
+    }, { merge: true });
     input.value = '';
-    saveSpiele();
   }
 
   function addSpiel() {
@@ -890,72 +851,32 @@
     const material = document.getElementById('neues-spiel-material').value.trim();
     const wann = document.getElementById('neues-spiel-wann').value.trim();
     if (!name || !ablauf) { alert('Bitte mindestens Spielname und Ablauf ausfüllen.'); return; }
-
-    const liste = document.getElementById('neue-spiele-liste');
-    const card = document.createElement('div');
-    card.className = 'spiel-card';
-    card.innerHTML = `
-      <h3>${name}</h3>
-      ${wann ? '<div class="spiel-meta">Wann: ' + wann + '</div>' : ''}
-      <p><strong>Ablauf:</strong> ${ablauf}</p>
-      ${material ? '<p style="margin-top:8px"><strong>Materialien:</strong> ' + material + '</p>' : ''}
-    `;
-    liste.insertBefore(card, liste.firstChild);
-
+    db.collection('spiele_neu').add({ name, ablauf, material, wann, createdAt: Date.now() });
     document.getElementById('neues-spiel-name').value = '';
     document.getElementById('neues-spiel-ablauf').value = '';
     document.getElementById('neues-spiel-material').value = '';
     document.getElementById('neues-spiel-wann').value = '';
-    saveSpiele();
   }
 
-  function saveSpiele() {
-    const aufgaben = Array.from(document.querySelectorAll('#aufgaben-liste .idee-item')).map(el => el.textContent);
-    localStorage.setItem('jga-spiele-aufgaben', JSON.stringify(aufgaben));
-  }
-
-  function loadSpiele() {
-    const saved = localStorage.getItem('jga-spiele-aufgaben');
-    if (!saved) return;
-    const liste = document.getElementById('aufgaben-liste');
-    const existing = ['💬 Jeden Satz beenden mit "wow, digga"', '🎩 Allen Passanten mit Hut einen Hofknicks machen'];
-    JSON.parse(saved).forEach(text => {
-      if (!existing.includes(text)) {
-        const div = document.createElement('div');
-        div.className = 'idee-item';
-        div.textContent = text;
-        liste.appendChild(div);
-      }
-    });
+  function renderSpielCard(data) {
+    const liste = document.getElementById('neue-spiele-liste');
+    const card = document.createElement('div');
+    card.className = 'spiel-card';
+    card.innerHTML = `
+      <h3>${data.name}</h3>
+      ${data.wann ? '<div class="spiel-meta">Wann: ' + data.wann + '</div>' : ''}
+      <p><strong>Ablauf:</strong> ${data.ablauf}</p>
+      ${data.material ? '<p style="margin-top:8px"><strong>Materialien:</strong> ' + data.material + '</p>' : ''}`;
+    liste.insertBefore(card, liste.firstChild);
   }
 
   // ===== EINKAUFSLISTE =====
   const KAT_ORDER = ['Getränke','Alkohol','Frühstück','Snacks','Obst & Gemüse','Aufschnitt & Käse','Brot & Backwaren','Milchprodukte','Deko & Zubehör','Hygiene & Sonstiges'];
   const KAT_ICONS = {
-    'Getränke': '🥤', 'Alkohol': '🍾', 'Frühstück': '🍳', 'Snacks': '🍿',
-    'Obst & Gemüse': '🥦', 'Aufschnitt & Käse': '🧀', 'Brot & Backwaren': '🥐',
-    'Milchprodukte': '🥛', 'Deko & Zubehör': '✨', 'Hygiene & Sonstiges': '🧴'
+    'Getränke':'🥤','Alkohol':'🍾','Frühstück':'🍳','Snacks':'🍿',
+    'Obst & Gemüse':'🥦','Aufschnitt & Käse':'🧀','Brot & Backwaren':'🥐',
+    'Milchprodukte':'🥛','Deko & Zubehör':'✨','Hygiene & Sonstiges':'🧴'
   };
-
-  let einkaufItems = JSON.parse(localStorage.getItem('jga-einkauf') || '[]');
-
-  function saveEinkauf() {
-    localStorage.setItem('jga-einkauf', JSON.stringify(einkaufItems));
-  }
-
-  function addEinkauf() {
-    const artikel = document.getElementById('einkauf-artikel').value.trim();
-    const menge = document.getElementById('einkauf-menge').value.trim();
-    const kat = document.getElementById('einkauf-kat').value || autoKategorie(artikel);
-    if (!artikel) return;
-    einkaufItems.push({ id: Date.now(), name: artikel, menge, kat, done: false });
-    document.getElementById('einkauf-artikel').value = '';
-    document.getElementById('einkauf-menge').value = '';
-    document.getElementById('einkauf-kat').value = '';
-    saveEinkauf();
-    renderEinkauf();
-    document.getElementById('einkauf-artikel').focus();
-  }
 
   function autoKategorie(name) {
     const n = name.toLowerCase();
@@ -971,70 +892,121 @@
     return 'Hygiene & Sonstiges';
   }
 
+  function addEinkauf() {
+    const artikel = document.getElementById('einkauf-artikel').value.trim();
+    const menge = document.getElementById('einkauf-menge').value.trim();
+    const kat = document.getElementById('einkauf-kat').value || autoKategorie(artikel);
+    if (!artikel) return;
+    db.collection('einkauf').add({ name: artikel, menge, kat, done: false, createdAt: Date.now() });
+    document.getElementById('einkauf-artikel').value = '';
+    document.getElementById('einkauf-menge').value = '';
+    document.getElementById('einkauf-kat').value = '';
+    document.getElementById('einkauf-artikel').focus();
+  }
+
   function toggleEinkaufItem(id) {
-    const item = einkaufItems.find(i => i.id === id);
-    if (item) item.done = !item.done;
-    saveEinkauf();
-    renderEinkauf();
+    const ref = db.collection('einkauf').doc(id);
+    ref.get().then(doc => { if (doc.exists) ref.update({ done: !doc.data().done }); });
   }
 
   function deleteEinkaufItem(id) {
-    einkaufItems = einkaufItems.filter(i => i.id !== id);
-    saveEinkauf();
-    renderEinkauf();
+    db.collection('einkauf').doc(id).delete();
   }
 
-  function renderEinkauf() {
+  function renderEinkauf(items) {
     const liste = document.getElementById('einkauf-liste');
     liste.innerHTML = '';
-
-    const total = einkaufItems.length;
-    const done = einkaufItems.filter(i => i.done).length;
+    const total = items.length;
+    const done = items.filter(i => i.done).length;
     const prog = document.getElementById('einkauf-progress');
-    if (total > 0) {
-      prog.innerHTML = '<strong>' + done + ' von ' + total + '</strong> Artikeln eingepackt';
-    } else {
-      prog.innerHTML = '';
-    }
+    prog.innerHTML = total > 0 ? '<strong>' + done + ' von ' + total + '</strong> Artikeln eingepackt' : '';
 
     const grouped = {};
     KAT_ORDER.forEach(k => grouped[k] = []);
-    einkaufItems.forEach(item => {
+    items.forEach(item => {
       if (!grouped[item.kat]) grouped[item.kat] = [];
       grouped[item.kat].push(item);
     });
 
+    let hasAny = false;
     KAT_ORDER.forEach(kat => {
-      const items = grouped[kat];
-      if (!items || items.length === 0) return;
-
+      const katItems = grouped[kat];
+      if (!katItems || katItems.length === 0) return;
+      hasAny = true;
       const block = document.createElement('div');
       block.className = 'kategorie-block';
-      block.innerHTML = '<h4>' + KAT_ICONS[kat] + ' ' + kat + ' <span class="kat-count">' + items.length + '</span></h4>';
-
-      items.forEach(item => {
+      block.innerHTML = '<h4>' + KAT_ICONS[kat] + ' ' + kat + ' <span class="kat-count">' + katItems.length + '</span></h4>';
+      katItems.forEach(item => {
         const div = document.createElement('div');
         div.className = 'einkauf-item' + (item.done ? ' gekauft' : '');
         div.innerHTML = `
-          <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleEinkaufItem(${item.id})">
+          <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleEinkaufItem('${item.id}')">
           <span class="einkauf-name">${item.name}</span>
           ${item.menge ? '<span class="einkauf-menge">' + item.menge + '</span>' : ''}
-          <button class="einkauf-del" onclick="deleteEinkaufItem(${item.id})" title="Entfernen">×</button>
-        `;
+          <button class="einkauf-del" onclick="deleteEinkaufItem('${item.id}')" title="Entfernen">×</button>`;
         block.appendChild(div);
       });
-
       liste.appendChild(block);
     });
-
-    if (total === 0) {
-      liste.innerHTML = '<p class="einkauf-empty">Noch keine Artikel eingetragen.</p>';
-    }
+    if (!hasAny) liste.innerHTML = '<p class="einkauf-empty">Noch keine Artikel eingetragen.</p>';
   }
 
-  renderTodos();
-  loadSpiele();
-  renderEinkauf();
+  // ===== FIRESTORE LISTENERS =====
+
+  // Todos: done-Status
+  db.collection('todos').onSnapshot(snapshot => {
+    snapshot.forEach(doc => { todoState[parseInt(doc.id)] = doc.data().done; });
+    renderTodos();
+    // Notizen neu laden nach Todo-Render
+    db.collection('notes').get().then(snap => {
+      snap.forEach(doc => {
+        const container = document.getElementById('notes-' + doc.id);
+        if (!container) return;
+        container.innerHTML = '';
+        (doc.data().items || []).forEach(n => renderNote(doc.id, n));
+      });
+    });
+  });
+
+  // Notizen live
+  db.collection('notes').onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(change => {
+      const container = document.getElementById('notes-' + change.doc.id);
+      if (!container) return;
+      container.innerHTML = '';
+      (change.doc.data().items || []).forEach(n => renderNote(change.doc.id, n));
+    });
+  });
+
+  // Spiele Aufgaben
+  db.collection('spiele').doc('aufgaben').onSnapshot(doc => {
+    const liste = document.getElementById('aufgaben-liste');
+    const fixed = ['💬 Jeden Satz beenden mit "wow, digga"', '🎩 Allen Passanten mit Hut einen Hofknicks machen'];
+    liste.innerHTML = fixed.map(t => '<div class="idee-item">' + t + '</div>').join('');
+    if (doc.exists) {
+      (doc.data().items || []).forEach(text => {
+        if (!fixed.includes(text)) {
+          const div = document.createElement('div');
+          div.className = 'idee-item';
+          div.textContent = text;
+          liste.appendChild(div);
+        }
+      });
+    }
+  });
+
+  // Neue Spiele
+  db.collection('spiele_neu').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+    document.getElementById('neue-spiele-liste').innerHTML = '';
+    snapshot.forEach(doc => renderSpielCard(doc.data()));
+  });
+
+  // Einkaufsliste
+  db.collection('einkauf').orderBy('createdAt').onSnapshot(snapshot => {
+    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderEinkauf(items);
+  });
+
 </script>
 
 </body>
