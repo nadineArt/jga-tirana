@@ -752,6 +752,52 @@
     .card-note-btn:hover { color: var(--gold); }
     .card-del-btn { background: none; border: none; color: #ddd; font-size: 1rem; cursor: pointer; padding: 0; margin-left: auto; line-height: 1; transition: color 0.2s; }
     .card-del-btn:hover { color: var(--rose); }
+
+    .card-date {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      cursor: pointer;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .card-date:hover { color: var(--gold); }
+    .card-date-empty { color: #ccc; font-style: italic; }
+    .card-date-input {
+      display: none;
+      width: 100%;
+      border: 1px solid var(--gold-pale);
+      border-radius: 3px;
+      padding: 3px 7px;
+      font-size: 0.78rem;
+      font-family: inherit;
+      background: white;
+      margin-bottom: 5px;
+      color: var(--text);
+    }
+    .card-text { cursor: pointer; }
+    .card-text:hover { color: #333; }
+    .card-text-edit {
+      display: none;
+      margin-bottom: 8px;
+    }
+    .card-text-edit textarea {
+      width: 100%;
+      border: 1px solid var(--gold-pale);
+      border-radius: 3px;
+      padding: 6px 8px;
+      font-family: inherit;
+      font-size: 0.83rem;
+      background: white;
+      height: 70px;
+      resize: vertical;
+      margin-bottom: 5px;
+      font-weight: 300;
+      color: var(--text);
+    }
+
     .card-notes { margin-top: 6px; }
     .card-note { background: var(--off-white); border-radius: 3px; padding: 6px 8px; margin-bottom: 4px; }
     .card-note-meta { font-size: 0.62rem; color: var(--text-muted); margin-bottom: 2px; }
@@ -952,14 +998,8 @@
     <div class="add-todo-form" id="add-todo-form">
       <label>Aufgabe *</label>
       <textarea id="new-todo-text" placeholder="Was muss erledigt werden?"></textarea>
-      <label>Phase</label>
-      <select id="new-todo-phase">
-        <option value="Sofort">Sofort</option>
-        <option value="Vorbereitung (bis Anfang Juli)">Vorbereitung (bis Anfang Juli)</option>
-        <option value="1–2 Wochen vor Reise">1–2 Wochen vor Reise</option>
-        <option value="Bis 13. Juli">Bis 13. Juli</option>
-        <option value="Recherche für Tirana (bis Abreise)">Recherche für Tirana (bis Abreise)</option>
-      </select>
+      <label>Fälligkeitsdatum (optional)</label>
+      <input type="date" id="new-todo-date">
       <div class="add-todo-form-buttons">
         <button class="btn-save" onclick="createTodo()">To-do speichern</button>
         <button class="btn-cancel" onclick="toggleAddTodoForm()">Abbrechen</button>
@@ -1094,32 +1134,32 @@
   // ===== TODO SEED-DATEN =====
   // Nur für initiales Befüllen von Firestore — HTML-Änderungen überschreiben keine Firestore-Daten
   const TODO_SEED = [
-    { nr: 1,  text: 'Reisezeitraum: <strong>Donnerstag, 16. Juli – Sonntag, 19. Juli</strong>', person: '', phase: 'Sofort', done: true },
-    { nr: 2,  text: 'Budget festlegen und aufteilen — Verwaltung via <strong>Splitwise</strong> oder <strong>Tricount</strong>, Abrechnung nach dem Urlaub; zahlen & tracken: Maria, Dajenne oder Melissa', person: '', phase: 'Sofort', done: false },
-    { nr: 3,  text: 'Reisezeitraum im Kalender unter <strong>falschem Titel</strong> blocken (Krissi kontrolliert Kalender)', person: 'Alle', phase: 'Sofort', done: false },
-    { nr: 4,  text: 'Schwarzes Outfit in der WhatsApp-Gruppe posten zur Abstimmung', person: 'Alle Freundinnen', phase: 'Sofort', done: false },
-    { nr: 5,  text: 'Partner fragen wegen Fahrt zum Flughafen Weeze (größeres Auto)', person: 'Jenny', phase: 'Sofort', done: false },
-    { nr: 6,  text: 'Transfer Düsseldorf HBF → Flughafen Weeze klären — 8 Personen + Gepäck (Flibco fährt Weeze nicht an)', person: 'Maria', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
-    { nr: 7,  text: 'Rückfahrt vom Flughafen Weeze organisieren', person: 'Maria', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
-    { nr: 8,  text: 'Unterkunft: Küchenausstattung noch klären ⚠️ — Bettwäsche ✅ Handtücher ✅ Schlafsituation ✅ (2 Doppelbetten + 2 Einzelbetten + Schlafcouch für 2 = 8 Plätze)', person: 'Maria', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
-    { nr: 9,  text: 'Deko planen und organisieren — was wird mitgebracht / vor Ort besorgt?', person: 'Jenny, Dajenne & Vera', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
-    { nr: 10, text: 'Spielideen sammeln und an Jenny & Nadine schicken (JGA-Spiele, Trinkspiele)', person: 'Alle', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
-    { nr: 11, text: 'Aufgaben-Ideen für „Bis die Braut dich enttarnt" ergänzen — Jenny & Nadine koordinieren und bereiten alles vor', person: 'Alle', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
-    { nr: 12, text: 'Instax (Fujifilm Polaroid-Kamera) + genug Film mitbringen', person: 'Dajenne & Nicole', phase: 'Vorbereitung (bis Anfang Juli)', done: false },
-    { nr: 13, text: 'Party-Optionen für 18.–19. Juli recherchieren — kurz vor Reise auf ra.co/events/al/tirana und eventbrite.de schauen', person: 'Dajenne', phase: '1–2 Wochen vor Reise', done: false },
-    { nr: 14, text: 'Überraschungsplan mit Krissis Mutter absprechen (Geburtstags-Dinner als Tarnung, Gruppe crasht das Dinner am 13. Juli)', person: 'Maria', phase: 'Bis 13. Juli', done: false },
-    { nr: 15, text: 'Transfer Flughafen Tirana (TIA) → Unterkunft klären — Großraum-Taxi, 2x Uber oder Shuttle für 8 Personen + Gepäck', person: 'Maria', phase: 'Recherche für Tirana (bis Abreise)', done: false },
-    { nr: 16, text: 'Einkaufsmöglichkeiten für Lebensmittel in der Nähe der Unterkunft (Blloku) recherchieren', person: 'Maria', phase: 'Recherche für Tirana (bis Abreise)', done: false },
-    { nr: 17, text: 'Stullen & Snacks für die Anreise vorbereiten (für alle 8 Personen)', person: 'Dajenne', phase: 'Recherche für Tirana (bis Abreise)', done: false },
-    { nr: 18, text: 'Gruppen für Ankunftstag einteilen: wer geht mit Krissi einkaufen, wer dekoriert?', person: '', phase: 'Recherche für Tirana (bis Abreise)', done: false },
-    { nr: 19, text: 'Gute Bars für Donnerstagabend (16. Juli) recherchieren — classy, gut bewertet', person: 'Melissa & Dajenne', phase: 'Recherche für Tirana (bis Abreise)', done: false },
-    { nr: 20, text: 'Tourguide-Optionen recherchieren: Guide für Freitag (17. Juli) mit mehreren Stops + ggf. Flughafentransfer anfragen', person: 'Vera', phase: 'Recherche für Tirana (bis Abreise)', done: false },
-    { nr: 21, text: 'Sightseeing-Route für Freitag finalisieren (Vorschlag liegt vor)', person: 'Nadine', phase: 'Recherche für Tirana (bis Abreise)', done: false },
-    { nr: 22, text: 'Authentisches albanisches Restaurant für Freitagmittag recherchieren — gut bewertet, für 8 Personen; glutenfreie & vegetarische Optionen bevorzugt', person: 'Vera', phase: 'Recherche für Tirana (bis Abreise)', done: false },
-    { nr: 23, text: 'Essens-Spots nahe Unterkunft (Blloku) zusammenstellen — Frühstück, Mittag & Abendessen für alle 4 Tage; glutenfreie & vegetarische Optionen bevorzugt', person: 'Vera', phase: 'Recherche für Tirana (bis Abreise)', done: false },
-    { nr: 24, text: 'Clubs / Partylocation für Freitagnacht recherchieren — Tipp: Blloku-Viertel', person: 'Melissa & Dajenne', phase: 'Recherche für Tirana (bis Abreise)', done: false },
-    { nr: 25, text: 'Schönen Strandabschnitt nahe Tirana recherchieren (Samstag, 18. Juli)', person: '', phase: 'Recherche für Tirana (bis Abreise)', done: false },
-    { nr: 26, text: 'Beach Bar nahe Tirana recherchieren — classy, gut bewertet', person: 'Melissa & Dajenne', phase: 'Recherche für Tirana (bis Abreise)', done: false },
+    { nr: 1,  text: 'Reisezeitraum: <strong>Donnerstag, 16. Juli – Sonntag, 19. Juli</strong>', person: '', dueDate: '2026-06-10', done: true },
+    { nr: 2,  text: 'Budget festlegen und aufteilen — Verwaltung via <strong>Splitwise</strong> oder <strong>Tricount</strong>, Abrechnung nach dem Urlaub; zahlen & tracken: Maria, Dajenne oder Melissa', person: '', dueDate: '2026-06-20', done: false },
+    { nr: 3,  text: 'Reisezeitraum im Kalender unter <strong>falschem Titel</strong> blocken (Krissi kontrolliert Kalender)', person: 'Alle', dueDate: '2026-06-15', done: false },
+    { nr: 4,  text: 'Schwarzes Outfit in der WhatsApp-Gruppe posten zur Abstimmung', person: 'Alle Freundinnen', dueDate: '2026-07-01', done: false },
+    { nr: 5,  text: 'Partner fragen wegen Fahrt zum Flughafen Weeze (größeres Auto)', person: 'Jenny', dueDate: '2026-06-20', done: false },
+    { nr: 6,  text: 'Transfer Düsseldorf HBF → Flughafen Weeze klären — 8 Personen + Gepäck (Flibco fährt Weeze nicht an)', person: 'Maria', dueDate: '2026-07-01', done: false },
+    { nr: 7,  text: 'Rückfahrt vom Flughafen Weeze organisieren', person: 'Maria', dueDate: '2026-07-01', done: false },
+    { nr: 8,  text: 'Unterkunft: Küchenausstattung noch klären ⚠️ — Bettwäsche ✅ Handtücher ✅ Schlafsituation ✅ (2 Doppelbetten + 2 Einzelbetten + Schlafcouch für 2 = 8 Plätze)', person: 'Maria', dueDate: '2026-07-01', done: false },
+    { nr: 9,  text: 'Deko planen und organisieren — was wird mitgebracht / vor Ort besorgt?', person: 'Jenny, Dajenne & Vera', dueDate: '2026-07-05', done: false },
+    { nr: 10, text: 'Spielideen sammeln und an Jenny & Nadine schicken (JGA-Spiele, Trinkspiele)', person: 'Alle', dueDate: '2026-07-05', done: false },
+    { nr: 11, text: 'Aufgaben-Ideen für „Bis die Braut dich enttarnt" ergänzen — Jenny & Nadine koordinieren und bereiten alles vor', person: 'Alle', dueDate: '2026-07-05', done: false },
+    { nr: 12, text: 'Instax (Fujifilm Polaroid-Kamera) + genug Film mitbringen', person: 'Dajenne & Nicole', dueDate: '2026-07-10', done: false },
+    { nr: 13, text: 'Party-Optionen für 18.–19. Juli recherchieren — kurz vor Reise auf ra.co/events/al/tirana und eventbrite.de schauen', person: 'Dajenne', dueDate: '2026-07-05', done: false },
+    { nr: 14, text: 'Überraschungsplan mit Krissis Mutter absprechen (Geburtstags-Dinner als Tarnung, Gruppe crasht das Dinner am 13. Juli)', person: 'Maria', dueDate: '2026-07-10', done: false },
+    { nr: 15, text: 'Transfer Flughafen Tirana (TIA) → Unterkunft klären — Großraum-Taxi, 2x Uber oder Shuttle für 8 Personen + Gepäck', person: 'Maria', dueDate: '2026-07-10', done: false },
+    { nr: 16, text: 'Einkaufsmöglichkeiten für Lebensmittel in der Nähe der Unterkunft (Blloku) recherchieren', person: 'Maria', dueDate: '2026-07-10', done: false },
+    { nr: 17, text: 'Stullen & Snacks für die Anreise vorbereiten (für alle 8 Personen)', person: 'Dajenne', dueDate: '2026-07-15', done: false },
+    { nr: 18, text: 'Gruppen für Ankunftstag einteilen: wer geht mit Krissi einkaufen, wer dekoriert?', person: '', dueDate: '2026-07-10', done: false },
+    { nr: 19, text: 'Gute Bars für Donnerstagabend (16. Juli) recherchieren — classy, gut bewertet', person: 'Melissa & Dajenne', dueDate: '2026-07-10', done: false },
+    { nr: 20, text: 'Tourguide-Optionen recherchieren: Guide für Freitag (17. Juli) mit mehreren Stops + ggf. Flughafentransfer anfragen', person: 'Vera', dueDate: '2026-07-05', done: false },
+    { nr: 21, text: 'Sightseeing-Route für Freitag finalisieren (Vorschlag liegt vor)', person: 'Nadine', dueDate: '2026-07-10', done: false },
+    { nr: 22, text: 'Authentisches albanisches Restaurant für Freitagmittag recherchieren — gut bewertet, für 8 Personen; glutenfreie & vegetarische Optionen bevorzugt', person: 'Vera', dueDate: '2026-07-10', done: false },
+    { nr: 23, text: 'Essens-Spots nahe Unterkunft (Blloku) zusammenstellen — Frühstück, Mittag & Abendessen für alle 4 Tage; glutenfreie & vegetarische Optionen bevorzugt', person: 'Vera', dueDate: '2026-07-10', done: false },
+    { nr: 24, text: 'Clubs / Partylocation für Freitagnacht recherchieren — Tipp: Blloku-Viertel', person: 'Melissa & Dajenne', dueDate: '2026-07-10', done: false },
+    { nr: 25, text: 'Schönen Strandabschnitt nahe Tirana recherchieren (Samstag, 18. Juli)', person: '', dueDate: '2026-07-10', done: false },
+    { nr: 26, text: 'Beach Bar nahe Tirana recherchieren — classy, gut bewertet', person: 'Melissa & Dajenne', dueDate: '2026-07-10', done: false },
   ];
 
   const TEILNEHMERINNEN = ['Maria', 'Melissa', 'Jenny', 'Nicole', 'Dajenne', 'Nadine', 'Vera', 'Krissi'];
@@ -1142,7 +1182,7 @@
           const persons = t.person ? t.person.split(/[,&]/).map(s => s.trim()).filter(s => TEILNEHMERINNEN.includes(s)) : [];
           batch.set(col.doc('seed_' + t.nr), {
             nr: t.nr, text: t.text, person: t.person, persons,
-            phase: t.phase, status: t.done ? 'done' : 'offen', seed: true
+            dueDate: t.dueDate || '', status: t.done ? 'done' : 'offen', seed: true
           });
         });
         batch.commit();
@@ -1166,6 +1206,12 @@
     setupDrop();
   }
 
+  function formatDate(iso) {
+    if (!iso) return null;
+    const [y, m, d] = iso.split('-');
+    return d + '.' + m + '.' + y;
+  }
+
   function buildCard(todo) {
     const card = document.createElement('div');
     card.className = 'kanban-card';
@@ -1176,14 +1222,26 @@
     const chipsHtml = persons.length
       ? persons.map(p => `<span class="card-person-chip">${p}</span>`).join('')
       : '';
-
     const togglesHtml = TEILNEHMERINNEN.map(p =>
       `<button class="person-toggle${persons.includes(p) ? ' active' : ''}" onclick="togglePerson('${todo.id}','${p}',this)">${p}</button>`
     ).join('');
 
+    const dateLabel = todo.dueDate
+      ? '📅 ' + formatDate(todo.dueDate)
+      : '<span class="card-date-empty">Fälligkeitsdatum setzen</span>';
+
     card.innerHTML = `
-      <div class="card-phase">${todo.phase}</div>
-      <div class="card-text">${todo.text}</div>
+      <div class="card-date" onclick="toggleDateInput('${todo.id}')" title="Datum ändern">${dateLabel}</div>
+      <input class="card-date-input" type="date" id="date-input-${todo.id}" value="${todo.dueDate || ''}"
+        onchange="saveDate('${todo.id}',this.value)" onblur="hideDateInput('${todo.id}')">
+      <div class="card-text" id="card-text-${todo.id}" onclick="toggleTextEdit('${todo.id}')" title="Klicken zum Bearbeiten">${todo.text}</div>
+      <div class="card-text-edit" id="card-text-edit-${todo.id}">
+        <textarea id="card-text-ta-${todo.id}">${todo.text.replace(/<[^>]+>/g,'')}</textarea>
+        <div class="card-note-form-btns">
+          <button class="btn-save" onclick="saveText('${todo.id}')">Speichern</button>
+          <button class="btn-cancel" onclick="toggleTextEdit('${todo.id}')">Abbrechen</button>
+        </div>
+      </div>
       <div class="card-persons" id="chips-${todo.id}">${chipsHtml}
         <button class="card-assign-btn" onclick="toggleAssignPanel('${todo.id}')">+ Person</button>
       </div>
@@ -1213,6 +1271,38 @@
     card.addEventListener('dragstart', e => { dragId = todo.id; card.classList.add('dragging'); });
     card.addEventListener('dragend', () => card.classList.remove('dragging'));
     return card;
+  }
+
+  function toggleDateInput(id) {
+    const inp = document.getElementById('date-input-' + id);
+    inp.style.display = inp.style.display === 'block' ? 'none' : 'block';
+    if (inp.style.display === 'block') inp.focus();
+  }
+  function hideDateInput(id) {
+    setTimeout(() => { document.getElementById('date-input-' + id).style.display = 'none'; }, 150);
+  }
+  function saveDate(id, val) {
+    db.collection('todos_data').doc(id).update({ dueDate: val }).catch(() => {
+      const t = allTodos.find(x => x.id === id);
+      if (t) { t.dueDate = val; renderKanban(); }
+    });
+  }
+
+  function toggleTextEdit(id) {
+    const textEl = document.getElementById('card-text-' + id);
+    const editEl = document.getElementById('card-text-edit-' + id);
+    const showing = editEl.style.display === 'block';
+    textEl.style.display = showing ? '' : 'none';
+    editEl.style.display = showing ? 'none' : 'block';
+    if (!showing) document.getElementById('card-text-ta-' + id).focus();
+  }
+  function saveText(id) {
+    const newText = document.getElementById('card-text-ta-' + id).value.trim();
+    if (!newText) return;
+    db.collection('todos_data').doc(id).update({ text: newText }).catch(() => {
+      const t = allTodos.find(x => x.id === id);
+      if (t) { t.text = newText; renderKanban(); }
+    });
   }
 
   function setupDrop() {
@@ -1283,13 +1373,13 @@
   function createTodo() {
     const text = document.getElementById('new-todo-text').value.trim();
     if (!text) return;
-    const phase = document.getElementById('new-todo-phase').value;
+    const dueDate = document.getElementById('new-todo-date').value;
     const maxNr = allTodos.reduce((m, t) => Math.max(m, t.nr || 0), 0);
     db.collection('todos_data').add({
-      nr: maxNr + 1, text, persons: [], person: '', phase, status: 'offen', seed: false
+      nr: maxNr + 1, text, persons: [], person: '', dueDate, status: 'offen', seed: false
     }).then(() => {
       document.getElementById('new-todo-text').value = '';
-      document.getElementById('new-todo-phase').value = 'Sofort';
+      document.getElementById('new-todo-date').value = '';
       document.getElementById('add-todo-form').classList.remove('visible');
     });
   }
@@ -1444,12 +1534,13 @@
   db.collection('todos_data').orderBy('nr').onSnapshot(snapshot => {
     allTodos = snapshot.docs.map(doc => {
       const d = doc.data();
-      // persons-Feld migrieren falls noch nicht vorhanden
       if (!d.persons && d.person) {
         d.persons = d.person.split(/[,&]/).map(s => s.trim()).filter(s => TEILNEHMERINNEN.includes(s));
       } else if (!d.persons) {
         d.persons = [];
       }
+      // phase → dueDate Migration für alte Dokumente
+      if (!d.dueDate && d.phase) d.dueDate = '';
       return { id: doc.id, ...d };
     });
     renderKanban();
