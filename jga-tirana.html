@@ -267,7 +267,9 @@
     }
 
     /* PROGRAMM */
-    .days { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .days { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 700px) { .days { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 420px) { .days { grid-template-columns: 1fr; } }
     .day-card {
       background: var(--white);
       border-radius: 4px;
@@ -1946,7 +1948,10 @@
     textInput.rows = 1;
     textInput.placeholder = 'Programmpunkt';
     textInput.title = 'Beschreibung bearbeiten';
-    textInput.addEventListener('input', () => { textInput.style.height = 'auto'; textInput.style.height = textInput.scrollHeight + 'px'; });
+    const autoResize = () => { textInput.style.height = 'auto'; textInput.style.height = textInput.scrollHeight + 'px'; };
+    textInput.addEventListener('input', autoResize);
+    // Höhe nach DOM-Einfügung setzen
+    requestAnimationFrame(autoResize);
     textInput.addEventListener('change', () => saveProgItem(dayId));
     textInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); textInput.blur(); }});
 
