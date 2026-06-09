@@ -946,8 +946,9 @@
     { nr: 26, text: 'Beach Bar nahe Tirana recherchieren — classy, gut bewertet', person: 'Melissa & Dajenne', phase: 'Recherche für Tirana (bis Abreise)', done: false },
   ];
 
-  // Alle Todos aus Firestore (lebende Daten)
-  let allTodos = []; // Array von { id, nr, text, person, phase, done }
+  // Alle Todos aus Firestore (lebende Daten) — sofort mit Seed befüllt als Fallback
+  let allTodos = TODO_SEED.map(t => ({ id: 'seed_' + t.nr, ...t }));
+  renderTodos();
 
   // Seed: Todos einmalig in Firestore schreiben, falls noch nicht vorhanden
   function seedTodos() {
@@ -962,7 +963,7 @@
         });
         batch.commit();
       }
-    });
+    }).catch(() => {}); // Firestore-Fehler (z.B. Regeln) still ignorieren
   }
   seedTodos();
 
