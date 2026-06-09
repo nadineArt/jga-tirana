@@ -1364,7 +1364,7 @@
       <label>Website oder Google Maps Link</label>
       <input type="text" id="bars-url" placeholder="https://..." oninput="checkLocationUrl('bars')">
       <div class="location-url-hint" id="bars-url-hint"></div>
-      <label>Adresse (optional)</label>
+      <label>Adresse (wird bei Google Maps Link automatisch gefunden)</label>
       <input type="text" id="bars-address" placeholder="z.B. Rruga Ismail Qemali, Tirana">
       <label>Notiz / Beschreibung (optional)</label>
       <textarea id="bars-desc" placeholder="z.B. Super Rooftop-Bar, tolle Aussicht..."></textarea>
@@ -1387,7 +1387,7 @@
       <label>Website oder Google Maps Link</label>
       <input type="text" id="restaurants-url" placeholder="https://..." oninput="checkLocationUrl('restaurants')">
       <div class="location-url-hint" id="restaurants-url-hint"></div>
-      <label>Adresse (optional)</label>
+      <label>Adresse (wird bei Google Maps Link automatisch gefunden)</label>
       <input type="text" id="restaurants-address" placeholder="z.B. Bulevardi Dëshmorët e Kombit, Tirana">
       <label>Notiz / Beschreibung (optional)</label>
       <textarea id="restaurants-desc" placeholder="z.B. Traditionell albanisch, vegetarische Optionen..."></textarea>
@@ -1933,14 +1933,44 @@
     return /maps\.google|goo\.gl\/maps|maps\.app\.goo\.gl/.test(url || '');
   }
 
+  // Reverse-Geocoding via Nominatim (OpenStreetMap, kein API-Key)
+  function reverseGeocode(lat, lng) {
+    return fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=de`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data || !data.address) return null;
+        const a = data.address;
+        const street = (a.road || '') + (a.house_number ? ' ' + a.house_number : '');
+        const city = a.city || a.town || a.village || 'Tirana';
+        return [street, city].filter(Boolean).join(', ');
+      })
+      .catch(() => null);
+  }
+
   function checkLocationUrl(type) {
     const url = document.getElementById(type + '-url').value.trim();
     const hint = document.getElementById(type + '-url-hint');
-    if (isGoogleMapsUrl(url)) {
-      hint.textContent = 'Google Maps Link gespeichert — Adresse bitte manuell eintragen.';
-      hint.style.color = 'var(--sage)';
-    } else if (url) {
-      hint.textContent = '';
+    const addrInput = document.getElementById(type + '-address');
+
+    if (!url) { hint.textContent = ''; return; }
+
+    const coords = parseCoords(url, '');
+    if (coords) {
+      hint.textContent = '⏳ Adresse wird geladen...';
+      hint.style.color = 'var(--text-muted)';
+      reverseGeocode(coords.lat, coords.lng).then(addr => {
+        if (addr && !addrInput.value) {
+          addrInput.value = addr;
+          hint.textContent = '✓ Adresse automatisch gefunden';
+          hint.style.color = 'var(--sage)';
+        } else if (!addr) {
+          hint.textContent = 'Koordinaten erkannt — Adresse bitte manuell eintragen.';
+          hint.style.color = 'var(--text-muted)';
+        }
+      });
+    } else if (isGoogleMapsUrl(url)) {
+      hint.textContent = 'Google Maps Link — Adresse bitte manuell eintragen.';
+      hint.style.color = 'var(--text-muted)';
     } else {
       hint.textContent = '';
     }
