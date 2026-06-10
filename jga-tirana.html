@@ -1280,6 +1280,7 @@
   <a href="#einkauf">Einkauf</a>
   <a href="#bars">Bars &amp; Clubs</a>
   <a href="#restaurants">Restaurants</a>
+  <a href="#sightseeing">Sightseeing</a>
   <a href="#karte">Karte</a>
 </nav>
 
@@ -1462,11 +1463,35 @@
     <a href="#karte" class="map-shortcut">📍 Alle Locations auf der Karte ansehen →</a>
   </section>
 
+  <!-- ===== SIGHTSEEING ===== -->
+  <section id="sightseeing">
+    <h2>Sightseeing</h2>
+    <div class="section-rule"></div>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; font-weight: 300;">Sehenswürdigkeiten sammeln — Adresse, Link und Notizen eintragen.</p>
+    <a class="gmaps-list-link" href="https://maps.app.goo.gl/wm2y7Coy6vW3eWZu9" target="_blank" rel="noopener">📋 Google Maps Liste bearbeiten →</a>
+
+    <div class="location-form">
+      <label>Name der Sehenswürdigkeit *</label>
+      <input type="text" id="sightseeing-name" placeholder="z.B. Skanderbeg Square">
+      <label>Website oder Google Maps Link</label>
+      <input type="text" id="sightseeing-url" placeholder="https://..." oninput="checkLocationUrl('sightseeing')">
+      <div class="location-url-hint" id="sightseeing-url-hint"></div>
+      <label>Adresse (wird bei Google Maps Link automatisch gefunden)</label>
+      <input type="text" id="sightseeing-address" placeholder="z.B. Sheshi Skënderbej, Tirana">
+      <label>Notiz / Beschreibung (optional)</label>
+      <textarea id="sightseeing-desc" placeholder="z.B. Zentraler Platz, must-see..."></textarea>
+      <button class="btn-primary" onclick="addLocation('sightseeing')" style="margin-top: 12px;">+ Hinzufügen</button>
+    </div>
+
+    <div class="location-grid" id="sightseeing-grid"></div>
+    <a href="#karte" class="map-shortcut">📍 Alle Locations auf der Karte ansehen →</a>
+  </section>
+
   <!-- ===== KARTE ===== -->
   <section id="karte">
     <h2>Tirana Map</h2>
     <div class="section-rule"></div>
-    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; font-weight: 300;">Alle gespeicherten Bars, Clubs und Restaurants auf einen Blick. Marker klicken öffnet Google Maps Navigation.</p>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; font-weight: 300;">Alle gespeicherten Bars, Clubs, Restaurants und Sehenswürdigkeiten auf einen Blick. Marker klicken öffnet Google Maps Navigation.</p>
     <a class="gmaps-list-link" href="https://maps.app.goo.gl/wm2y7Coy6vW3eWZu9" target="_blank" rel="noopener">📋 Google Maps Liste bearbeiten →</a>
     <div id="main-map" style="height: 480px; border-radius: 6px; border: 1px solid var(--gold-pale); box-shadow: 0 2px 16px rgba(0,0,0,0.07);"></div>
   </section>
@@ -2312,8 +2337,38 @@
       document.getElementById(type + '-address').value = '';
       document.getElementById(type + '-desc').value = '';
       document.getElementById(type + '-url-hint').textContent = '';
-      // Koordinaten via Geocoding nachholen falls Adresse bekannt aber keine Coords
-      if (address && !lat) {
+
+      // Falls URL angegeben aber noch keine Adresse: jetzt noch fetchen und in Firestore speichern
+      if (url && !address) {
+        const urlCoords = parseCoords(url, '');
+        if (urlCoords) {
+          reverseGeocode(urlCoords.lat, urlCoords.lng).then(fetchedAddr => {
+            if (fetchedAddr) {
+              ref.update({ address: fetchedAddr, lat: urlCoords.lat, lng: urlCoords.lng });
+            }
+          });
+        } else {
+          fetchAddressFromUrl(url).then(result => {
+            if (!result) return;
+            const fetchedAddr = (typeof result === 'object' && result.address) ? result.address : (typeof result === 'string' ? result : null);
+            const fetchedDesc = (typeof result === 'object' && result.description) ? result.description : null;
+            if (!fetchedAddr) return;
+            const update = { address: fetchedAddr };
+            if (fetchedDesc && !description) update.description = fetchedDesc;
+            // Forward geocoding für Koordinaten
+            fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(fetchedAddr + ', Tirana') + '&format=json&limit=1')
+              .then(r => r.json())
+              .then(results => {
+                if (results && results[0]) {
+                  update.lat = parseFloat(results[0].lat);
+                  update.lng = parseFloat(results[0].lon);
+                }
+                ref.update(update);
+              }).catch(() => { ref.update(update); });
+          });
+        }
+      } else if (address && !lat) {
+        // Koordinaten via Geocoding nachholen falls Adresse bekannt aber keine Coords
         fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(address + ', Tirana') + '&format=json&limit=1')
           .then(r => r.json())
           .then(results => {
@@ -2469,15 +2524,19 @@
 
   // ===== HAUPTKARTE (Leaflet, OpenStreetMap) =====
   let mainMap = null;
-  let mainMarkers = { bars: {}, restaurants: {} };
+  let mainMarkers = { bars: {}, restaurants: {}, sightseeing: {} };
 
-  // Benutzerdefiniertes Gold-Icon für Bars, Sage-Icon für Restaurants
+  // Benutzerdefiniertes Gold-Icon für Bars, Sage-Icon für Restaurants, Rose-Icon für Sightseeing
   const iconBars = L.divIcon({
     html: '<div style="background:var(--gold,#b8976a);width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>',
     className: '', iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -10]
   });
   const iconRestaurants = L.divIcon({
     html: '<div style="background:#8a9e8c;width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>',
+    className: '', iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -10]
+  });
+  const iconSightseeing = L.divIcon({
+    html: '<div style="background:var(--rose,#c4907a);width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>',
     className: '', iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -10]
   });
 
@@ -2493,7 +2552,8 @@
       const div = L.DomUtil.create('div');
       div.style.cssText = 'background:white;padding:8px 12px;border-radius:4px;font-size:0.72rem;font-family:Jost,sans-serif;box-shadow:0 1px 6px rgba(0,0,0,0.12)';
       div.innerHTML = '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="width:10px;height:10px;border-radius:50%;background:#b8976a;flex-shrink:0"></div> Bars & Clubs</div>' +
-        '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#8a9e8c;flex-shrink:0"></div> Restaurants</div>';
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="width:10px;height:10px;border-radius:50%;background:#8a9e8c;flex-shrink:0"></div> Restaurants</div>' +
+        '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#c4907a;flex-shrink:0"></div> Sightseeing</div>';
       return div;
     };
     legend.addTo(mainMap);
@@ -2508,12 +2568,13 @@
     // Alle alten Marker entfernen
     Object.values(mainMarkers.bars).forEach(m => m.remove());
     Object.values(mainMarkers.restaurants).forEach(m => m.remove());
-    mainMarkers = { bars: {}, restaurants: {} };
+    Object.values(mainMarkers.sightseeing).forEach(m => m.remove());
+    mainMarkers = { bars: {}, restaurants: {}, sightseeing: {} };
 
     const allWithCoords = [];
 
-    ['bars', 'restaurants'].forEach(type => {
-      const icon = type === 'bars' ? iconBars : iconRestaurants;
+    ['bars', 'restaurants', 'sightseeing'].forEach(type => {
+      const icon = type === 'bars' ? iconBars : type === 'restaurants' ? iconRestaurants : iconSightseeing;
       allTodosCache[type].forEach(item => {
         if (!item.lat || !item.lng) return;
         const gmUrl = buildGoogleMapsUrl(item.lat, item.lng, item.name);
@@ -2540,7 +2601,7 @@
   }
 
   // Cache der Location-Daten für die Karte
-  let allTodosCache = { bars: [], restaurants: [] };
+  let allTodosCache = { bars: [], restaurants: [], sightseeing: [] };
 
   // Karte initialisieren wenn Sektion sichtbar wird
   const mapObserver = new IntersectionObserver(entries => {
@@ -2552,6 +2613,13 @@
   db.collection('bars').orderBy('createdAt').onSnapshot(snapshot => {
     allTodosCache.bars = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     renderLocations('bars', allTodosCache.bars);
+    updateMainMap();
+  });
+
+  // Sightseeing Listener — Cache aktualisieren und Karte neu zeichnen
+  db.collection('sightseeing').orderBy('createdAt').onSnapshot(snapshot => {
+    allTodosCache.sightseeing = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderLocations('sightseeing', allTodosCache.sightseeing);
     updateMainMap();
   });
 
