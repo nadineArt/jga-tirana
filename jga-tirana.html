@@ -821,6 +821,46 @@
       margin-bottom: 7px;
       align-items: center;
     }
+    .kanban-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .kanban-filter-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-right: 2px;
+    }
+    .kanban-filter-chip {
+      background: white;
+      border: 1.5px solid var(--gold-pale);
+      border-radius: 12px;
+      padding: 4px 12px;
+      font-size: 0.73rem;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+    .kanban-filter-chip:hover { border-color: var(--gold); color: var(--gold); }
+    .kanban-filter-chip.active { background: var(--gold); border-color: var(--gold); color: white; font-weight: 500; }
+    .kanban-filter-clear {
+      background: none;
+      border: none;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+      padding: 4px 6px;
+      text-decoration: underline;
+      display: none;
+    }
+    .kanban-filter-clear.visible { display: inline; }
     .card-person-chip {
       background: var(--gold-pale);
       color: var(--gold);
@@ -1348,6 +1388,10 @@
       </div>
     </div>
 
+    <div class="kanban-filter" id="kanban-filter">
+      <span class="kanban-filter-label">Filter:</span>
+    </div>
+
     <div class="kanban-board" id="kanban-board">
       <div class="kanban-col" data-status="offen">
         <div class="kanban-col-header">Offen <span class="kanban-col-count" id="count-offen">0</span></div>
@@ -1647,6 +1691,7 @@
     status: t.done ? 'done' : 'offen',
     persons: t.person ? t.person.split(/[,&]/).map(s => s.trim()).filter(s => TEILNEHMERINNEN.includes(s)) : []
   }));
+  buildFilterBar();
   renderKanban();
 
   // Seed einmalig in Firestore schreiben
@@ -1671,11 +1716,39 @@
   // ===== KANBAN RENDERN =====
   let dragId = null;
 
+  // Active person filters (multi-select, OR logic)
+  let activePersonFilters = new Set();
+
+  function buildFilterBar() {
+    const bar = document.getElementById('kanban-filter');
+    bar.innerHTML = '<span class="kanban-filter-label">Filter:</span>';
+    TEILNEHMERINNEN.forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'kanban-filter-chip' + (activePersonFilters.has(p) ? ' active' : '');
+      btn.textContent = p;
+      btn.onclick = () => {
+        if (activePersonFilters.has(p)) activePersonFilters.delete(p);
+        else activePersonFilters.add(p);
+        buildFilterBar();
+        renderKanban();
+      };
+      bar.appendChild(btn);
+    });
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'kanban-filter-clear' + (activePersonFilters.size > 0 ? ' visible' : '');
+    clearBtn.textContent = 'Zurücksetzen';
+    clearBtn.onclick = () => { activePersonFilters.clear(); buildFilterBar(); renderKanban(); };
+    bar.appendChild(clearBtn);
+  }
+
   function renderKanban() {
     ['offen','in_arbeit','done'].forEach(status => {
       const col = document.getElementById('col-' + status);
       col.innerHTML = '';
-      const todos = allTodos.filter(t => (t.status || 'offen') === status);
+      let todos = allTodos.filter(t => (t.status || 'offen') === status);
+      if (activePersonFilters.size > 0) {
+        todos = todos.filter(t => (t.persons || []).some(p => activePersonFilters.has(p)));
+      }
       document.getElementById('count-' + status).textContent = todos.length;
       todos.forEach(todo => col.appendChild(buildCard(todo)));
     });
