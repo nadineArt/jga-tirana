@@ -2053,10 +2053,31 @@
   }
 
   function deleteCardNote(docId, index) {
+    const container = document.getElementById('card-notes-' + docId);
+    // Merke den exakten Inhalt der zu löschenden Notiz anhand der gerenderten Position
+    const noteEls = container ? container.querySelectorAll('.card-note') : [];
+    const targetEl = noteEls[index];
+    const targetMeta = targetEl ? targetEl.querySelector('.card-note-meta')?.textContent : null;
+    const targetText = targetEl ? targetEl.querySelector('.card-note-text')?.textContent : null;
+
     db.collection('notes').doc(docId).get().then(doc => {
       if (!doc.exists) return;
-      const items = (doc.data().items || []).filter((_, i) => i !== index);
-      db.collection('notes').doc(docId).set({ items });
+      const items = doc.data().items || [];
+      let filtered;
+      if (targetMeta && targetText) {
+        // Lösche anhand Inhalt, nicht Index — robust gegen parallele Änderungen
+        let removed = false;
+        filtered = items.filter(n => {
+          if (!removed && n.meta === targetMeta && n.text === targetText) {
+            removed = true;
+            return false;
+          }
+          return true;
+        });
+      } else {
+        filtered = items.filter((_, i) => i !== index);
+      }
+      db.collection('notes').doc(docId).set({ items: filtered });
     });
   }
 
