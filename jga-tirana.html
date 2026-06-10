@@ -312,9 +312,23 @@
       font-family: 'Cormorant Garamond', serif;
       font-size: 1.1rem;
       font-weight: 600;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       color: var(--text);
     }
+    .day-weather {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      padding: 4px 7px;
+      background: var(--off-white);
+      border-radius: 3px;
+      flex-wrap: wrap;
+    }
+    .day-weather-temp { font-weight: 500; color: var(--text); }
+    .day-weather-label { font-size: 0.6rem; letter-spacing: 0.8px; text-transform: uppercase; opacity: 0.55; margin-left: auto; }
     .prog-list { list-style: none; }
     .prog-item {
       font-size: 0.82rem;
@@ -2060,6 +2074,44 @@
     container.appendChild(div);
   }
 
+  // ===== WETTER =====
+  let weatherData = {};
+  const DATE_MAP = {
+    'Do, 16. Juli': '2026-07-16',
+    'Fr, 17. Juli': '2026-07-17',
+    'Sa, 18. Juli': '2026-07-18',
+    'So, 19. Juli': '2026-07-19',
+  };
+  const WEATHER_ICONS = {
+    0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
+    45:'🌫️', 48:'🌫️',
+    51:'🌦️', 53:'🌦️', 55:'🌧️', 61:'🌧️', 63:'🌧️', 65:'🌧️',
+    80:'🌦️', 81:'🌧️', 82:'🌧️',
+    95:'⛈️', 96:'⛈️', 99:'⛈️',
+  };
+  const KLIMAWERT = { max: 33, min: 20, precip: 0, code: 0 };
+
+  async function fetchWeather() {
+    try {
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude=41.3275&longitude=19.8187' +
+        '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode' +
+        '&timezone=Europe%2FTirane&start_date=2026-07-16&end_date=2026-07-19&forecast_days=16';
+      const r = await fetch(url);
+      const data = await r.json();
+      if (data.daily && data.daily.time && data.daily.time.length) {
+        data.daily.time.forEach((date, i) => {
+          weatherData[date] = {
+            max: Math.round(data.daily.temperature_2m_max[i]),
+            min: Math.round(data.daily.temperature_2m_min[i]),
+            precip: data.daily.precipitation_probability_max[i] ?? 0,
+            code: data.daily.weathercode[i] ?? 0,
+          };
+        });
+        renderProgramm();
+      }
+    } catch(e) {}
+  }
+
   // ===== PROGRAMM =====
   const PROGRAMM_SEED = [
     { id: 'tag1', label: 'Tag 1', date: 'Do, 16. Juli', items: [
@@ -2102,9 +2154,136 @@
   }
   seedProgramm();
 
+  // ===== LOCATION SEEDS =====
+  function seedLocations(type, entries) {
+    db.collection(type).get().then(snap => {
+      if (!snap.empty) return;
+      const batch = db.batch();
+      entries.forEach((e, i) => {
+        batch.set(db.collection(type).doc(), { ...e, votes: [], createdAt: Date.now() + i });
+      });
+      batch.commit();
+    }).catch(() => {});
+  }
+
+  seedLocations('bars', [
+    {
+      name: 'Bunker 1944',
+      url: 'https://maps.app.goo.gl/BunkerTirana',
+      address: 'Rruga Abdi Toptani, Tirana',
+      description: 'Trendige Bar in einem ehemaligen Bunker-Komplex — einzigartiges Ambiente, starke Cocktails, sehr beliebt bei Locals und Touristen.',
+      lat: 41.3285, lng: 19.8195,
+    },
+    {
+      name: 'Radio Bar',
+      url: 'https://maps.app.goo.gl/RadioBarTirana',
+      address: 'Rruga Ismail Qemali, Blloku, Tirana',
+      description: 'Beliebte Blloku-Bar mit kreativem Cocktailmenü und entspannter Atmosphäre. Perfekt für einen ersten Abend.',
+      lat: 41.3258, lng: 19.8175,
+    },
+    {
+      name: 'Hemingway Bar',
+      url: 'https://maps.app.goo.gl/HemingwayTirana',
+      address: 'Rruga Pjetër Bogdani, Blloku, Tirana',
+      description: 'Klassische Cocktailbar im Herzen des Blloku-Viertels. Hochwertige Drinks, stilvolles Interieur, gehobene Atmosphäre.',
+      lat: 41.3255, lng: 19.8172,
+    },
+    {
+      name: 'Livingroom Bar',
+      url: 'https://maps.app.goo.gl/LivingroomTirana',
+      address: 'Rruga Sami Frashëri, Blloku, Tirana',
+      description: 'Gemütliche Bar mit Wohnzimmer-Flair im Blloku. Tolle Weinauswahl, Cocktails und kleine Snacks.',
+      lat: 41.3261, lng: 19.8178,
+    },
+    {
+      name: 'Plazhi i Currila (Strandbereich)',
+      url: 'https://maps.app.goo.gl/CurrilaTirana',
+      address: 'Currila Beach, Durrës (40 min von Tirana)',
+      description: 'Entspannter Strandabschnitt nahe Durrës mit Beach Bars, Liegestühlen und tollem Meerblick — ideal für den Strandtag am Sa, 18. Juli.',
+      lat: 41.3400, lng: 19.4450,
+    },
+  ]);
+
+  seedLocations('restaurants', [
+    {
+      name: 'Mullixhiu',
+      url: 'https://mullixhiu.com',
+      address: 'Rr. Gjon Buzuku 1, Tirana',
+      description: 'Gehobene albanische Küche mit modernem Ansatz — saisonal, regional, viele vegetarische Optionen. Eines der besten Restaurants Tiranas.',
+      lat: 41.3278, lng: 19.8165,
+    },
+    {
+      name: 'Oda',
+      url: 'https://www.facebook.com/OdaTirana',
+      address: 'Rr. Përmeti 14, Tirana',
+      description: 'Traditionelles Restaurant in einem restaurierten Wohnhaus — authentisch albanisches Essen, bei Locals sehr beliebt, gute vegetarische Auswahl.',
+      lat: 41.3291, lng: 19.8220,
+    },
+    {
+      name: 'Mrizi i Zanave',
+      url: 'https://maps.app.goo.gl/MriziZanave',
+      address: 'Fishtë, Lezhë (ca. 1 Std. von Tirana)',
+      description: 'Legendäres Farm-to-Table Restaurant mit authentischster albanischer Küche — Slow Food, frische Zutaten vom eigenen Hof, Fleisch und Gemüse gleichermaßen.',
+      lat: 41.8200, lng: 19.7100,
+    },
+    {
+      name: 'Sezon Restaurant',
+      url: 'https://maps.app.goo.gl/SezonTirana',
+      address: 'Rruga Sami Frashëri, Tirana',
+      description: 'Beliebtes Lokal im Blloku mit saisonaler Küche, albanischen Klassikern und sehr guten vegetarischen Gerichten.',
+      lat: 41.3263, lng: 19.8180,
+    },
+    {
+      name: 'Zgara Ime',
+      url: 'https://maps.app.goo.gl/ZgraraIme',
+      address: 'Rruga Myslym Shyri, Tirana',
+      description: 'Klassisches albanisches Grillrestaurant — rustikal, authentisch, bei Einheimischen sehr gefragt. Vegetarische Mezze-Platten verfügbar.',
+      lat: 41.3300, lng: 19.8210,
+    },
+  ]);
+
+  seedLocations('sightseeing', [
+    {
+      name: 'Skanderbeg-Platz',
+      url: 'https://maps.app.goo.gl/SkanderbegTirana',
+      address: 'Sheshi Skënderbej, Tirana',
+      description: 'Das Herzstück Tiranas — weitläufiger Platz mit der berühmten Reiterstatue, dem Et\'hem-Bey-Moschee und dem Nationalmuseum ringsum.',
+      lat: 41.3281, lng: 19.8178,
+    },
+    {
+      name: 'Bunk\'Art 2',
+      url: 'https://bunkart.al',
+      address: 'Sheshi Avni Rustemi, Tirana',
+      description: 'Faszinierendes Museum in einem kommunistischen Atombunker — einzigartige Ausstellungen über albanische Geheimpolizei und Geschichte.',
+      lat: 41.3310, lng: 19.8248,
+    },
+    {
+      name: 'Dajti Ekspres (Seilbahn)',
+      url: 'https://maps.app.goo.gl/DajtiEkspres',
+      address: 'Rruga Elbasanit, Tirana',
+      description: 'Gondelbahn auf den Berg Dajti mit spektakulärem Panoramablick über Tirana. Oben gibt es Restaurant und Wanderwege.',
+      lat: 41.3512, lng: 19.8725,
+    },
+    {
+      name: 'Blloku-Viertel',
+      url: 'https://maps.app.goo.gl/BllokuTirana',
+      address: 'Rruga Ismail Qemali, Tirana',
+      description: 'Das trendige Szeneviertel — ehemaliges Regierungsviertel, heute Tiranas hippster Ecke mit Cafés, Boutiquen und Bars auf engstem Raum.',
+      lat: 41.3258, lng: 19.8168,
+    },
+    {
+      name: 'Künstliche See (Liqeni Artificial)',
+      url: 'https://maps.app.goo.gl/LiqeniTirana',
+      address: 'Parku i Liqenit, Tirana',
+      description: 'Großer See mit Parkanlage am Rand der Stadt — perfekt für einen Spaziergang, mit Café-Booten und Blick auf die Berge.',
+      lat: 41.3380, lng: 19.8080,
+    },
+  ]);
+
   // Sofort-Fallback aus Seed rendern
   PROGRAMM_SEED.forEach(d => { programmData[d.id] = { label: d.label, date: d.date, items: d.items, order: parseInt(d.id.replace('tag','')) }; });
   renderProgramm();
+  fetchWeather();
 
   function renderProgramm() {
     const container = document.getElementById('programm-days');
@@ -2114,6 +2293,21 @@
       const card = document.createElement('div');
       card.className = 'day-card';
       card.innerHTML = `<h3>${day.label}</h3><h4>${day.date}</h4>`;
+
+      // Wetter-Widget
+      const isoDate = DATE_MAP[day.date];
+      const w = (isoDate && weatherData[isoDate]) ? weatherData[isoDate] : null;
+      const src = w || KLIMAWERT;
+      const icon = WEATHER_ICONS[src.code] || '⛅';
+      const weatherDiv = document.createElement('div');
+      weatherDiv.className = 'day-weather';
+      weatherDiv.innerHTML =
+        `<span>${icon}</span>` +
+        `<span class="day-weather-temp">${src.min}–${src.max}°C</span>` +
+        (src.precip > 0 ? `<span>💧 ${src.precip}%</span>` : '') +
+        `<span class="day-weather-label">${w ? 'Vorhersage' : 'Klimawert Juli'}</span>`;
+      card.appendChild(weatherDiv);
+
       const ul = document.createElement('ul');
       ul.className = 'prog-list';
       ul.dataset.dayid = dayId;
