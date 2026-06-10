@@ -1130,6 +1130,35 @@
       align-items: center;
       pointer-events: all;
     }
+    .location-vote-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: 1.5px solid var(--gold-pale);
+      border-radius: 20px;
+      padding: 4px 11px;
+      font-size: 0.78rem;
+      font-family: inherit;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.18s;
+      letter-spacing: 0.3px;
+    }
+    .location-vote-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .location-vote-btn.voted {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: white;
+    }
+    .location-vote-btn .vote-names {
+      font-size: 0.68rem;
+      opacity: 0.75;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .location-link-btn {
       background: var(--gold-pale);
       color: var(--gold);
@@ -2397,6 +2426,13 @@
         ? `<a class="location-link-btn" href="${item.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 Link öffnen</a>`
         : '';
 
+      const votes = item.votes || [];
+      const currentUser = localStorage.getItem('jga-username') || '';
+      const hasVoted = currentUser && votes.includes(currentUser);
+      const voteCount = votes.length;
+      const voteLabel = hasVoted ? '♥ Gefällt mir' : '♡ Gefällt mir';
+      const voteNamesStr = votes.length > 0 ? votes.join(', ') : '';
+
       card.innerHTML = `
         <div class="location-tooltip">
           <strong>${item.name}</strong>
@@ -2414,6 +2450,10 @@
           onclick="event.stopPropagation()"
         >${item.description || ''}</div>
         <div class="location-card-actions">
+          <button class="location-vote-btn${hasVoted ? ' voted' : ''}"
+            onclick="event.stopPropagation(); toggleLocationVote('${type}','${item.id}',this)"
+            title="${voteNamesStr || 'Noch keine Stimmen'}"
+          >${voteLabel}${voteCount > 0 ? ' <strong>' + voteCount + '</strong>' : ''}${voteNamesStr ? '<span class="vote-names">' + voteNamesStr + '</span>' : ''}</button>
           ${urlBtn}
           <button class="location-del-btn" onclick="event.stopPropagation(); deleteLocation('${type}','${item.id}')" title="Löschen">×</button>
         </div>`;
@@ -2423,6 +2463,24 @@
       });
 
       grid.appendChild(card);
+    });
+  }
+
+  function toggleLocationVote(type, id, btn) {
+    const currentUser = localStorage.getItem('jga-username');
+    if (!currentUser) {
+      alert('Bitte zuerst deinen Namen eingeben (oben rechts im Header).');
+      return;
+    }
+    const FieldValue = firebase.firestore.FieldValue;
+    const ref = db.collection(type).doc(id);
+    ref.get().then(doc => {
+      const votes = doc.data().votes || [];
+      if (votes.includes(currentUser)) {
+        ref.update({ votes: FieldValue.arrayRemove(currentUser) });
+      } else {
+        ref.update({ votes: FieldValue.arrayUnion(currentUser) });
+      }
     });
   }
 
