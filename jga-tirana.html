@@ -3030,18 +3030,16 @@
   let mainMarkers = { bars: {}, restaurants: {}, sightseeing: {} };
 
   // Benutzerdefiniertes Gold-Icon für Bars, Sage-Icon für Restaurants, Rose-Icon für Sightseeing
-  const iconBars = L.divIcon({
-    html: '<div style="background:var(--gold,#b8976a);width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>',
-    className: '', iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -10]
-  });
-  const iconRestaurants = L.divIcon({
-    html: '<div style="background:#8a9e8c;width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>',
-    className: '', iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -10]
-  });
-  const iconSightseeing = L.divIcon({
-    html: '<div style="background:var(--rose,#c4907a);width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>',
-    className: '', iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -10]
-  });
+  function makeMarkerIcon(color) {
+    return L.divIcon({
+      html: `<div style="background:${color};width:16px;height:16px;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.45)"></div>`,
+      className: '', iconSize: [16, 16], iconAnchor: [8, 8], popupAnchor: [0, -10]
+    });
+  }
+  // Bars: kräftiges Gold · Restaurants: Petrol-Blaugrün · Sightseeing: Weinrot
+  const iconBars        = makeMarkerIcon('#c9982a'); // gesättigtes Gold
+  const iconRestaurants = makeMarkerIcon('#3a7d7a'); // Petrol/Blaugrün
+  const iconSightseeing = makeMarkerIcon('#9b3a5a'); // Weinrot/Beere
 
   function initMainMap() {
     if (mainMap) return;
@@ -3054,9 +3052,9 @@
     legend.onAdd = () => {
       const div = L.DomUtil.create('div');
       div.style.cssText = 'background:white;padding:8px 12px;border-radius:4px;font-size:0.72rem;font-family:Jost,sans-serif;box-shadow:0 1px 6px rgba(0,0,0,0.12)';
-      div.innerHTML = '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="width:10px;height:10px;border-radius:50%;background:#b8976a;flex-shrink:0"></div> Bars & Clubs</div>' +
-        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="width:10px;height:10px;border-radius:50%;background:#8a9e8c;flex-shrink:0"></div> Restaurants</div>' +
-        '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#c4907a;flex-shrink:0"></div> Sightseeing</div>';
+      div.innerHTML = '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="width:11px;height:11px;border-radius:50%;background:#c9982a;flex-shrink:0"></div> Bars & Clubs</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="width:11px;height:11px;border-radius:50%;background:#3a7d7a;flex-shrink:0"></div> Restaurants</div>' +
+        '<div style="display:flex;align-items:center;gap:6px"><div style="width:11px;height:11px;border-radius:50%;background:#9b3a5a;flex-shrink:0"></div> Sightseeing</div>';
       return div;
     };
     legend.addTo(mainMap);
