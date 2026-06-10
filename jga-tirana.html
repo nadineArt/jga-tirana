@@ -3036,9 +3036,10 @@
     delBtn.title = 'Löschen';
     delBtn.onclick = () => {
       if (!confirm('Aufgabe löschen?')) return;
+      const currentText = span.dataset.original;
       db.collection('spiele').doc('aufgaben').get().then(doc => {
         const items = doc.exists ? (doc.data().items || []) : [];
-        db.collection('spiele').doc('aufgaben').set({ items: items.filter(t => t !== text) });
+        db.collection('spiele').doc('aufgaben').set({ items: items.filter(t => t !== currentText) });
       });
     };
     div.appendChild(span);
