@@ -2989,7 +2989,7 @@
   // Spiele Aufgaben
   const FIXED_AUFGABEN = ['💬 Jeden Satz beenden mit "wow, digga"', '🎩 Allen Passanten mit Hut einen Hofknicks machen'];
 
-  function renderAufgabeItem(text, allItems) {
+  function renderAufgabeItem(text) {
     const liste = document.getElementById('aufgaben-liste');
     const div = document.createElement('div');
     div.className = 'idee-item';
@@ -2997,11 +2997,17 @@
     span.className = 'idee-item-text';
     span.contentEditable = 'true';
     span.textContent = text;
+    span.dataset.original = text;
     span.addEventListener('blur', () => {
       const newText = span.textContent.trim();
-      if (!newText) return;
-      const updated = allItems.map(t => t === text ? newText : t);
-      db.collection('spiele').doc('aufgaben').set({ items: updated });
+      const original = span.dataset.original;
+      if (!newText || newText === original) return;
+      db.collection('spiele').doc('aufgaben').get().then(doc => {
+        const items = doc.exists ? (doc.data().items || []) : [];
+        const updated = items.map(t => t === original ? newText : t);
+        db.collection('spiele').doc('aufgaben').set({ items: updated });
+        span.dataset.original = newText;
+      });
     });
     const delBtn = document.createElement('button');
     delBtn.className = 'idee-del-btn';
@@ -3009,7 +3015,10 @@
     delBtn.title = 'Löschen';
     delBtn.onclick = () => {
       if (!confirm('Aufgabe löschen?')) return;
-      db.collection('spiele').doc('aufgaben').set({ items: allItems.filter(t => t !== text) });
+      db.collection('spiele').doc('aufgaben').get().then(doc => {
+        const items = doc.exists ? (doc.data().items || []) : [];
+        db.collection('spiele').doc('aufgaben').set({ items: items.filter(t => t !== text) });
+      });
     };
     div.appendChild(span);
     div.appendChild(delBtn);
@@ -3034,7 +3043,7 @@
       db.collection('spiele').doc('aufgaben').set({ items });
       return;
     }
-    items.forEach(text => renderAufgabeItem(text, items));
+    items.forEach(text => renderAufgabeItem(text));
   });
 
   // Neue Spiele
