@@ -579,13 +579,66 @@
       margin-bottom: 10px;
     }
     .idee-item {
-      padding: 7px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 6px 0;
       border-bottom: 1px solid var(--gold-pale);
       font-size: 0.87rem;
       font-weight: 300;
       color: var(--text);
     }
     .idee-item:last-child { border-bottom: none; }
+    .idee-item-text {
+      flex: 1;
+      cursor: text;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      padding: 2px 4px;
+      transition: border-color 0.15s;
+      min-width: 0;
+    }
+    .idee-item-text:hover { border-color: var(--gold-pale); }
+    .idee-item-text:focus { outline: none; border-color: var(--gold); background: var(--off-white); }
+    .idee-del-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 0.95rem;
+      padding: 0 2px;
+      line-height: 1;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .idee-del-btn:hover { color: var(--rose); }
+    .spiel-card-actions {
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .spiel-del-btn {
+      background: none;
+      border: 1px solid #eee;
+      border-radius: 3px;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 0.72rem;
+      padding: 4px 10px;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .spiel-del-btn:hover { border-color: var(--rose); color: var(--rose); }
+    .spiel-card [contenteditable] {
+      cursor: text;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      padding: 2px 4px;
+      transition: border-color 0.15s;
+      display: block;
+    }
+    .spiel-card [contenteditable]:hover { border-color: var(--gold-pale); }
+    .spiel-card [contenteditable]:focus { outline: none; border-color: var(--gold); background: var(--off-white); }
 
     .spiel-template {
       background: var(--off-white);
@@ -1440,9 +1493,9 @@
 
     <!-- Vorhandenes Spiel -->
     <div class="spiel-card">
-      <h3>Bis die Braut dich enttarnt</h3>
-      <div class="spiel-meta">Spieleranzahl: alle Freundinnen (ohne Krissi) &nbsp;·&nbsp; Wann: den ganzen Trip über</div>
-      <p><strong>Ablauf:</strong> Jede Freundin zieht heimlich eine Aufgabe. Die Aufgabe muss so lange ausgeführt werden, bis Krissi es bemerkt und die Person enttarnt. Wer enttarnt wird, scheidet aus. Wer am längsten unentdeckt bleibt, gewinnt.</p>
+      <h3 id="enttarnt-name" contenteditable="true" onblur="saveEnttarntField('name',this)">Bis die Braut dich enttarnt</h3>
+      <div class="spiel-meta" id="enttarnt-meta" contenteditable="true" onblur="saveEnttarntField('meta',this)">Spieleranzahl: alle Freundinnen (ohne Krissi) &nbsp;·&nbsp; Wann: den ganzen Trip über</div>
+      <p id="enttarnt-ablauf" contenteditable="true" onblur="saveEnttarntField('ablauf',this)"><strong>Ablauf:</strong> Jede Freundin zieht heimlich eine Aufgabe. Die Aufgabe muss so lange ausgeführt werden, bis Krissi es bemerkt und die Person enttarnt. Wer enttarnt wird, scheidet aus. Wer am längsten unentdeckt bleibt, gewinnt.</p>
 
       <div class="spiel-ideen">
         <h4>Aufgaben-Ideen</h4>
@@ -2191,6 +2244,20 @@
   });
 
   // ===== SPIELE =====
+  function saveEnttarntField(field, el) {
+    const val = el.innerHTML.trim(); // innerHTML um <strong> zu erhalten
+    db.collection('spiele').doc('enttarnt').set({ [field]: val }, { merge: true });
+  }
+
+  // Enttarnt-Spiel aus Firestore laden falls editiert
+  db.collection('spiele').doc('enttarnt').onSnapshot(doc => {
+    if (!doc.exists) return;
+    const d = doc.data();
+    if (d.name) document.getElementById('enttarnt-name').textContent = d.name;
+    if (d.meta) document.getElementById('enttarnt-meta').innerHTML = d.meta;
+    if (d.ablauf) document.getElementById('enttarnt-ablauf').innerHTML = d.ablauf;
+  });
+
   function addAufgabe() {
     const input = document.getElementById('neue-aufgabe');
     const text = input.value.trim();
@@ -2214,16 +2281,70 @@
     document.getElementById('neues-spiel-wann').value = '';
   }
 
-  function renderSpielCard(data) {
+  function makeEditable(el, onSave) {
+    el.style.cssText += 'cursor:text;border:1px solid transparent;border-radius:3px;padding:2px 4px;transition:border-color 0.15s';
+    el.addEventListener('mouseover', () => { if (document.activeElement !== el) el.style.borderColor = 'var(--gold-pale)'; });
+    el.addEventListener('mouseout', () => { if (document.activeElement !== el) el.style.borderColor = 'transparent'; });
+    el.addEventListener('focus', () => { el.style.borderColor = 'var(--gold)'; });
+    el.addEventListener('blur', () => { el.style.borderColor = 'transparent'; onSave(el.textContent.trim()); });
+  }
+
+  function renderSpielCard(id, data) {
     const liste = document.getElementById('neue-spiele-liste');
     const card = document.createElement('div');
     card.className = 'spiel-card';
-    card.innerHTML = `
-      <h3>${data.name}</h3>
-      ${data.wann ? '<div class="spiel-meta">Wann: ' + data.wann + '</div>' : ''}
-      <p><strong>Ablauf:</strong> ${data.ablauf}</p>
-      ${data.material ? '<p style="margin-top:8px"><strong>Materialien:</strong> ' + data.material + '</p>' : ''}`;
-    liste.insertBefore(card, liste.firstChild);
+
+    const h3 = document.createElement('h3');
+    h3.contentEditable = 'true';
+    h3.textContent = data.name;
+    makeEditable(h3, val => { if (val) db.collection('spiele_neu').doc(id).update({ name: val }); });
+
+    const meta = document.createElement('div');
+    meta.className = 'spiel-meta';
+    meta.contentEditable = 'true';
+    meta.textContent = data.wann || '';
+    meta.setAttribute('data-placeholder', 'Wann spielen?');
+    makeEditable(meta, val => db.collection('spiele_neu').doc(id).update({ wann: val }));
+
+    const ablaufLabel = document.createElement('span');
+    ablaufLabel.innerHTML = '<strong>Ablauf:</strong> ';
+    const ablaufText = document.createElement('span');
+    ablaufText.contentEditable = 'true';
+    ablaufText.textContent = data.ablauf;
+    const ablaufP = document.createElement('p');
+    ablaufP.appendChild(ablaufLabel);
+    ablaufP.appendChild(ablaufText);
+    makeEditable(ablaufText, val => { if (val) db.collection('spiele_neu').doc(id).update({ ablauf: val }); });
+
+    const materialLabel = document.createElement('span');
+    materialLabel.innerHTML = '<strong>Materialien:</strong> ';
+    const materialText = document.createElement('span');
+    materialText.contentEditable = 'true';
+    materialText.textContent = data.material || '';
+    materialText.setAttribute('data-placeholder', '—');
+    const materialP = document.createElement('p');
+    materialP.style.marginTop = '8px';
+    materialP.appendChild(materialLabel);
+    materialP.appendChild(materialText);
+    makeEditable(materialText, val => db.collection('spiele_neu').doc(id).update({ material: val }));
+
+    const actions = document.createElement('div');
+    actions.className = 'spiel-card-actions';
+    const delBtn = document.createElement('button');
+    delBtn.className = 'spiel-del-btn';
+    delBtn.textContent = 'Spiel löschen';
+    delBtn.onclick = () => {
+      if (!confirm('Spiel wirklich löschen?')) return;
+      db.collection('spiele_neu').doc(id).delete();
+    };
+    actions.appendChild(delBtn);
+
+    card.appendChild(h3);
+    card.appendChild(meta);
+    card.appendChild(ablaufP);
+    card.appendChild(materialP);
+    card.appendChild(actions);
+    liste.appendChild(card);
   }
 
   // ===== EINKAUFSLISTE =====
@@ -2641,26 +2762,60 @@
   });
 
   // Spiele Aufgaben
+  const FIXED_AUFGABEN = ['💬 Jeden Satz beenden mit "wow, digga"', '🎩 Allen Passanten mit Hut einen Hofknicks machen'];
+
+  function renderAufgabeItem(text, allItems) {
+    const liste = document.getElementById('aufgaben-liste');
+    const div = document.createElement('div');
+    div.className = 'idee-item';
+    const span = document.createElement('span');
+    span.className = 'idee-item-text';
+    span.contentEditable = 'true';
+    span.textContent = text;
+    span.addEventListener('blur', () => {
+      const newText = span.textContent.trim();
+      if (!newText) return;
+      const updated = allItems.map(t => t === text ? newText : t);
+      db.collection('spiele').doc('aufgaben').set({ items: updated });
+    });
+    const delBtn = document.createElement('button');
+    delBtn.className = 'idee-del-btn';
+    delBtn.textContent = '×';
+    delBtn.title = 'Löschen';
+    delBtn.onclick = () => {
+      if (!confirm('Aufgabe löschen?')) return;
+      db.collection('spiele').doc('aufgaben').set({ items: allItems.filter(t => t !== text) });
+    };
+    div.appendChild(span);
+    div.appendChild(delBtn);
+    liste.appendChild(div);
+  }
+
   db.collection('spiele').doc('aufgaben').onSnapshot(doc => {
     const liste = document.getElementById('aufgaben-liste');
-    const fixed = ['💬 Jeden Satz beenden mit "wow, digga"', '🎩 Allen Passanten mit Hut einen Hofknicks machen'];
-    liste.innerHTML = fixed.map(t => '<div class="idee-item">' + t + '</div>').join('');
+    liste.innerHTML = '';
+    let items = [];
     if (doc.exists) {
-      (doc.data().items || []).forEach(text => {
-        if (!fixed.includes(text)) {
-          const div = document.createElement('div');
-          div.className = 'idee-item';
-          div.textContent = text;
-          liste.appendChild(div);
-        }
-      });
+      items = doc.data().items || [];
+      // Einmalig Fixed-Items migrieren falls noch nicht vorhanden
+      const missing = FIXED_AUFGABEN.filter(f => !items.includes(f));
+      if (missing.length) {
+        items = [...missing, ...items];
+        db.collection('spiele').doc('aufgaben').set({ items });
+        return;
+      }
+    } else {
+      items = [...FIXED_AUFGABEN];
+      db.collection('spiele').doc('aufgaben').set({ items });
+      return;
     }
+    items.forEach(text => renderAufgabeItem(text, items));
   });
 
   // Neue Spiele
   db.collection('spiele_neu').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
     document.getElementById('neue-spiele-liste').innerHTML = '';
-    snapshot.forEach(doc => renderSpielCard(doc.data()));
+    snapshot.forEach(doc => renderSpielCard(doc.id, doc.data()));
   });
 
   // Einkaufsliste
