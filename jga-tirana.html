@@ -2166,38 +2166,69 @@
     }).catch(() => {});
   }
 
+  // URL-Migration: kaputte maps.app.goo.gl-Platzhalter durch echte Google Maps Suche-URLs ersetzen
+  const URL_FIXES = {
+    'Bunker 1944':              'https://www.google.com/maps/search/?api=1&query=Bunker+1944+Bar+Tirana',
+    'Radio Bar':                'https://www.google.com/maps/search/?api=1&query=Radio+Bar+Blloku+Tirana',
+    'Hemingway Bar':            'https://www.google.com/maps/search/?api=1&query=Hemingway+Bar+Tirana',
+    'Livingroom Bar':           'https://www.google.com/maps/search/?api=1&query=Livingroom+Bar+Tirana',
+    'Plazhi i Currila (Strandbereich)': 'https://www.google.com/maps/search/?api=1&query=Plazhi+Currila+Durres+Albania',
+    'Mrizi i Zanave':           'https://www.google.com/maps/search/?api=1&query=Mrizi+i+Zanave+Restaurant+Albania',
+    'Sezon Restaurant':         'https://www.google.com/maps/search/?api=1&query=Sezon+Restaurant+Tirana',
+    'Zgara Ime':                'https://www.google.com/maps/search/?api=1&query=Zgara+Ime+Restaurant+Tirana',
+    'Skanderbeg-Platz':         'https://www.google.com/maps/search/?api=1&query=Skanderbeg+Square+Tirana',
+    'Dajti Ekspres (Seilbahn)': 'https://www.google.com/maps/search/?api=1&query=Dajti+Ekspres+cable+car+Tirana',
+    'Blloku-Viertel':           'https://www.google.com/maps/search/?api=1&query=Blloku+district+Tirana',
+    'Künstliche See (Liqeni Artificial)': 'https://www.google.com/maps/search/?api=1&query=Liqeni+Artificial+Tirana',
+  };
+
+  function migrateLocationUrls() {
+    ['bars', 'restaurants', 'sightseeing'].forEach(type => {
+      db.collection(type).get().then(snap => {
+        snap.forEach(doc => {
+          const data = doc.data();
+          const fix = URL_FIXES[data.name];
+          if (fix && (!data.url || data.url.includes('maps.app.goo.gl'))) {
+            doc.ref.update({ url: fix });
+          }
+        });
+      }).catch(() => {});
+    });
+  }
+  migrateLocationUrls();
+
   seedLocations('bars', [
     {
       name: 'Bunker 1944',
-      url: 'https://maps.app.goo.gl/BunkerTirana',
+      url: 'https://www.google.com/maps/search/?api=1&query=Bunker+1944+Bar+Tirana',
       address: 'Rruga Abdi Toptani, Tirana',
       description: 'Trendige Bar in einem ehemaligen Bunker-Komplex — einzigartiges Ambiente, starke Cocktails, sehr beliebt bei Locals und Touristen.',
       lat: 41.3285, lng: 19.8195,
     },
     {
       name: 'Radio Bar',
-      url: 'https://maps.app.goo.gl/RadioBarTirana',
+      url: 'https://www.google.com/maps/search/?api=1&query=Radio+Bar+Blloku+Tirana',
       address: 'Rruga Ismail Qemali, Blloku, Tirana',
       description: 'Beliebte Blloku-Bar mit kreativem Cocktailmenü und entspannter Atmosphäre. Perfekt für einen ersten Abend.',
       lat: 41.3258, lng: 19.8175,
     },
     {
       name: 'Hemingway Bar',
-      url: 'https://maps.app.goo.gl/HemingwayTirana',
+      url: 'https://www.google.com/maps/search/?api=1&query=Hemingway+Bar+Tirana',
       address: 'Rruga Pjetër Bogdani, Blloku, Tirana',
       description: 'Klassische Cocktailbar im Herzen des Blloku-Viertels. Hochwertige Drinks, stilvolles Interieur, gehobene Atmosphäre.',
       lat: 41.3255, lng: 19.8172,
     },
     {
       name: 'Livingroom Bar',
-      url: 'https://maps.app.goo.gl/LivingroomTirana',
+      url: 'https://www.google.com/maps/search/?api=1&query=Livingroom+Bar+Tirana',
       address: 'Rruga Sami Frashëri, Blloku, Tirana',
       description: 'Gemütliche Bar mit Wohnzimmer-Flair im Blloku. Tolle Weinauswahl, Cocktails und kleine Snacks.',
       lat: 41.3261, lng: 19.8178,
     },
     {
       name: 'Plazhi i Currila (Strandbereich)',
-      url: 'https://maps.app.goo.gl/CurrilaTirana',
+      url: 'https://www.google.com/maps/search/?api=1&query=Plazhi+Currila+Durres+Albania',
       address: 'Currila Beach, Durrës (40 min von Tirana)',
       description: 'Entspannter Strandabschnitt nahe Durrës mit Beach Bars, Liegestühlen und tollem Meerblick — ideal für den Strandtag am Sa, 18. Juli.',
       lat: 41.3400, lng: 19.4450,
@@ -2221,21 +2252,21 @@
     },
     {
       name: 'Mrizi i Zanave',
-      url: 'https://maps.app.goo.gl/MriziZanave',
+      url: 'https://www.google.com/maps/search/?api=1&query=Mrizi+i+Zanave+Restaurant+Albania',
       address: 'Fishtë, Lezhë (ca. 1 Std. von Tirana)',
       description: 'Legendäres Farm-to-Table Restaurant mit authentischster albanischer Küche — Slow Food, frische Zutaten vom eigenen Hof, Fleisch und Gemüse gleichermaßen.',
       lat: 41.8200, lng: 19.7100,
     },
     {
       name: 'Sezon Restaurant',
-      url: 'https://maps.app.goo.gl/SezonTirana',
+      url: 'https://www.google.com/maps/search/?api=1&query=Sezon+Restaurant+Tirana',
       address: 'Rruga Sami Frashëri, Tirana',
       description: 'Beliebtes Lokal im Blloku mit saisonaler Küche, albanischen Klassikern und sehr guten vegetarischen Gerichten.',
       lat: 41.3263, lng: 19.8180,
     },
     {
       name: 'Zgara Ime',
-      url: 'https://maps.app.goo.gl/ZgraraIme',
+      url: 'https://www.google.com/maps/search/?api=1&query=Zgara+Ime+Restaurant+Tirana',
       address: 'Rruga Myslym Shyri, Tirana',
       description: 'Klassisches albanisches Grillrestaurant — rustikal, authentisch, bei Einheimischen sehr gefragt. Vegetarische Mezze-Platten verfügbar.',
       lat: 41.3300, lng: 19.8210,
@@ -2245,7 +2276,7 @@
   seedLocations('sightseeing', [
     {
       name: 'Skanderbeg-Platz',
-      url: 'https://maps.app.goo.gl/SkanderbegTirana',
+      url: 'https://www.google.com/maps/search/?api=1&query=Skanderbeg+Square+Tirana',
       address: 'Sheshi Skënderbej, Tirana',
       description: 'Das Herzstück Tiranas — weitläufiger Platz mit der berühmten Reiterstatue, dem Et\'hem-Bey-Moschee und dem Nationalmuseum ringsum.',
       lat: 41.3281, lng: 19.8178,
@@ -2259,21 +2290,21 @@
     },
     {
       name: 'Dajti Ekspres (Seilbahn)',
-      url: 'https://maps.app.goo.gl/DajtiEkspres',
+      url: 'https://www.google.com/maps/search/?api=1&query=Dajti+Ekspres+cable+car+Tirana',
       address: 'Rruga Elbasanit, Tirana',
       description: 'Gondelbahn auf den Berg Dajti mit spektakulärem Panoramablick über Tirana. Oben gibt es Restaurant und Wanderwege.',
       lat: 41.3512, lng: 19.8725,
     },
     {
       name: 'Blloku-Viertel',
-      url: 'https://maps.app.goo.gl/BllokuTirana',
+      url: 'https://www.google.com/maps/search/?api=1&query=Blloku+district+Tirana',
       address: 'Rruga Ismail Qemali, Tirana',
       description: 'Das trendige Szeneviertel — ehemaliges Regierungsviertel, heute Tiranas hippster Ecke mit Cafés, Boutiquen und Bars auf engstem Raum.',
       lat: 41.3258, lng: 19.8168,
     },
     {
       name: 'Künstliche See (Liqeni Artificial)',
-      url: 'https://maps.app.goo.gl/LiqeniTirana',
+      url: 'https://www.google.com/maps/search/?api=1&query=Liqeni+Artificial+Tirana',
       address: 'Parku i Liqenit, Tirana',
       description: 'Großer See mit Parkanlage am Rand der Stadt — perfekt für einen Spaziergang, mit Café-Booten und Blick auf die Berge.',
       lat: 41.3380, lng: 19.8080,
