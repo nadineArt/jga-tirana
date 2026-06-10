@@ -1691,8 +1691,6 @@
     status: t.done ? 'done' : 'offen',
     persons: t.person ? t.person.split(/[,&]/).map(s => s.trim()).filter(s => TEILNEHMERINNEN.includes(s)) : []
   }));
-  buildFilterBar();
-  renderKanban();
 
   // Seed einmalig in Firestore schreiben
   function seedTodos() {
@@ -1755,6 +1753,10 @@
     updateProgress();
     setupDrop();
   }
+
+  // Initial render nach Funktionsdefinitionen
+  buildFilterBar();
+  renderKanban();
 
   function formatDate(iso) {
     if (!iso) return null;
