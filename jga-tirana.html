@@ -1151,14 +1151,6 @@
       border-color: var(--gold);
       color: white;
     }
-    .location-vote-btn .vote-names {
-      font-size: 0.68rem;
-      opacity: 0.75;
-      max-width: 120px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
     .location-link-btn {
       background: var(--gold-pale);
       color: var(--gold);
@@ -1279,9 +1271,9 @@
   <div class="login-box">
     <h2>JGA Tirana</h2>
     <div class="login-line"></div>
-    <p>Bitte Passwort eingeben</p>
-    <input type="password" id="pw-input" placeholder="••••••" onkeydown="if(event.key==='Enter') document.getElementById('name-input').focus()">
-    <input type="text" id="name-input" class="name-input" placeholder="Dein Name (optional)" onkeydown="if(event.key==='Enter') checkPw()">
+    <p>Bitte Passwort und deinen Namen eingeben</p>
+    <input type="password" id="pw-input" placeholder="Passwort" onkeydown="if(event.key==='Enter') document.getElementById('name-input').focus()">
+    <input type="text" id="name-input" class="name-input" placeholder="Dein Name *" onkeydown="if(event.key==='Enter') checkPw()">
     <button onclick="checkPw()">Zugang</button>
     <div class="login-error" id="pw-error"></div>
   </div>
@@ -1577,19 +1569,24 @@
   // ===== LOGIN =====
   function checkPw() {
     const val = document.getElementById('pw-input').value.trim().toLowerCase();
+    const nameVal = document.getElementById('name-input').value.trim();
+    if (!nameVal) {
+      document.getElementById('pw-error').textContent = 'Bitte deinen Namen eingeben.';
+      document.getElementById('name-input').focus();
+      return;
+    }
     if (val === 'krissi') {
-      // Save name if provided
-      const nameVal = document.getElementById('name-input').value.trim();
-      if (nameVal) setUsername(nameVal);
+      setUsername(nameVal);
       sessionStorage.setItem('jga-auth', '1');
       document.getElementById('login-overlay').classList.add('hidden');
     } else {
       document.getElementById('pw-error').textContent = 'Falsches Passwort.';
       document.getElementById('pw-input').value = '';
+      document.getElementById('pw-input').focus();
     }
   }
 
-  if (sessionStorage.getItem('jga-auth') === '1') {
+  if (sessionStorage.getItem('jga-auth') === '1' && getUsername()) {
     document.getElementById('login-overlay').classList.add('hidden');
   } else {
     // Pre-fill name if already known
@@ -2430,8 +2427,8 @@
       const currentUser = localStorage.getItem('jga-username') || '';
       const hasVoted = currentUser && votes.includes(currentUser);
       const voteCount = votes.length;
-      const voteLabel = hasVoted ? '♥ Gefällt mir' : '♡ Gefällt mir';
-      const voteNamesStr = votes.length > 0 ? votes.join(', ') : '';
+      const voteLabel = hasVoted ? '♥' : '♡';
+      const voteNamesStr = votes.length > 0 ? votes.join(', ') : 'Noch keine Stimmen';
 
       card.innerHTML = `
         <div class="location-tooltip">
@@ -2452,8 +2449,8 @@
         <div class="location-card-actions">
           <button class="location-vote-btn${hasVoted ? ' voted' : ''}"
             onclick="event.stopPropagation(); toggleLocationVote('${type}','${item.id}',this)"
-            title="${voteNamesStr || 'Noch keine Stimmen'}"
-          >${voteLabel}${voteCount > 0 ? ' <strong>' + voteCount + '</strong>' : ''}${voteNamesStr ? '<span class="vote-names">' + voteNamesStr + '</span>' : ''}</button>
+            title="${voteNamesStr}"
+          >${voteLabel}${voteCount > 0 ? ' ' + voteCount : ''}</button>
           ${urlBtn}
           <button class="location-del-btn" onclick="event.stopPropagation(); deleteLocation('${type}','${item.id}')" title="Löschen">×</button>
         </div>`;
